@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Look-Ahead EDF CPU Scheduler</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="command-band" aria-labelledby="app-title">
+        <div>
+          <p class="eyebrow">ECU scheduler terminal</p>
+          <h1 id="app-title">Look-Ahead Conserving EDF</h1>
+        </div>
+        <label class="horizon-control">
+          Simulation end
+          <input id="simulation-end" type="number" min="1" step="1">
+        </label>
+      </section>
+
+      <section class="workspace" aria-label="Scheduler workspace">
+        <aside class="control-panel">
+          <div class="panel-section">
+            <h2>Scenarios</h2>
+            <div id="scenario-list" class="scenario-list"></div>
+          </div>
+
+          <div class="panel-section">
+            <h2>Task Presets</h2>
+            <div id="preset-list" class="chip-list"></div>
+          </div>
+
+          <div class="panel-section">
+            <div class="section-header">
+              <h2>Tasks</h2>
+              <div class="button-row">
+                <button id="add-task" type="button">Add</button>
+                <button id="clear-tasks" type="button">Clear</button>
+              </div>
+            </div>
+            <div id="task-list" class="task-list"></div>
+            <ul id="errors" class="errors" aria-live="polite"></ul>
+          </div>
+        </aside>
+
+        <section class="simulation-panel" aria-label="Simulation results">
+          <div class="section-header">
+            <h2>Trace</h2>
+            <p>EDF priority, conservative look-ahead reservation, discrete P-states.</p>
+          </div>
+          <div id="summary" class="summary-grid" aria-live="polite"></div>
+          <div id="timeline" class="timeline-shell"></div>
+          <div id="inspector" class="inspector"></div>
+
+          <details class="json-panel">
+            <summary>Scenario JSON</summary>
+            <div class="json-grid">
+              <label>
+                Export
+                <textarea id="export-box" spellcheck="false"></textarea>
+              </label>
+              <label>
+                Import
+                <textarea id="import-box" spellcheck="false"></textarea>
+              </label>
+            </div>
+            <div class="button-row">
+              <button id="export-json" type="button">Export Current</button>
+              <button id="import-json" type="button">Import JSON</button>
+            </div>
+          </details>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="src/app.mjs"></script>
+  </body>
+</html>

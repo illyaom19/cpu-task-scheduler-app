@@ -1,0 +1,77 @@
+2026-04-12 15:36 PDT - Agent: Codex
+Action: plan
+Summary: Created a proposed plan in chat for adding root AGENTS.md instructions and a mandatory append-only agents_log file.
+Files touched: none
+Verification: Reviewed PROJECT_VISION.md, PROJECT_SPECS.md, neighboring notes-app/AGENTS.md, and current repo file list.
+
+2026-04-12 15:36 PDT - Agent: Codex
+Action: edit
+Summary: Implemented the agent instruction plan by adding AGENTS.md and seeding agents_log with initial entries.
+Files touched: AGENTS.md, agents_log
+Verification: pending
+
+2026-04-12 15:36 PDT - Agent: Codex
+Action: test
+Summary: Verified AGENTS.md and agents_log contents by reading them back and checked git status.
+Files touched: none
+Verification: sed -n on AGENTS.md and agents_log succeeded; git status shows AGENTS.md and agents_log as untracked additions.
+
+2026-04-12 15:36 PDT - Agent: Codex
+Action: handoff
+Summary: Completed implementation of the AGENTS.md and agents_log plan. No application code was added.
+Files touched: AGENTS.md, agents_log
+Verification: AGENTS.md and agents_log were read back successfully; git status confirmed both files are present as new untracked files.
+
+2026-04-12 15:36 PDT - Agent: Codex
+Action: investigation
+Summary: Began MVP implementation work by reading AGENTS.md, PROJECT_VISION.md, PROJECT_SPECS.md, and agents_log. Scope is the zero-compile static webapp described in the project plan.
+Files touched: agents_log
+Verification: Read required source docs successfully.
+
+2026-04-12 15:45 PDT - Agent: Codex
+Action: edit
+Summary: Implemented the first zero-compile MVP: static HTML/CSS app shell, vanilla ES module task model, presets, Look-Ahead Conserving EDF scheduler, SVG timeline renderer, JSON import/export, README, tests, and gitignore for Windows sidecar metadata.
+Files touched: .gitignore, README.md, agents_log, index.html, styles.css, src/app.mjs, src/model.mjs, src/presets.mjs, src/renderer.mjs, src/scheduler.mjs, tests/scheduler.test.mjs
+Verification: pending
+
+2026-04-12 15:45 PDT - Agent: Codex
+Action: test
+Summary: Ran dependency-free scheduler tests and module syntax checks. Confirmed no package or build tooling references were introduced.
+Files touched: none
+Verification: node tests/scheduler.test.mjs passed 9 tests; node --check passed for src/app.mjs, src/renderer.mjs, src/model.mjs, src/presets.mjs, src/scheduler.mjs, and tests/scheduler.test.mjs; rg for package/build tooling returned no matches.
+
+2026-04-12 15:46 PDT - Agent: Codex
+Action: test
+Summary: Started a local static server for browser testing after the sandbox blocked normal socket creation.
+Files touched: none
+Verification: python3 -m http.server 8000 --bind 127.0.0.1 is running; escalated curl -I http://127.0.0.1:8000/ returned HTTP 200.
+
+2026-04-12 15:46 PDT - Agent: Codex
+Action: handoff
+Summary: Completed the first implementation pass for the zero-compile scheduler webapp. The local static server is available for manual review.
+Files touched: agents_log
+Verification: git status shows new project files as untracked additions; local server responds with HTTP 200.
+
+2026-04-12 15:49 PDT - Agent: Codex
+Action: test
+Summary: Prepared the initial project commit and push request by checking repository status, remote, current branch, and rerunning scheduler tests. GitHub CLI is not installed, but a PR was not requested.
+Files touched: agents_log
+Verification: git status showed the initial project files as untracked on main; origin is https://github.com/illyaom19/cpu-task-scheduler-app.git; node tests/scheduler.test.mjs passed 9 tests.
+
+2026-04-12 15:49 PDT - Agent: Codex
+Action: handoff
+Summary: Committing and pushing the current zero-compile scheduler app implementation to origin/main as the initial project commit.
+Files touched: all current project files
+Verification: Commit and push pending at time of log entry.
+
+2026-04-12 15:50 PDT - Agent: Codex
+Action: debugging
+Summary: Initial commit attempt failed because the new repository had no Git author identity configured. Set repository-local user.name and user.email using the inferred GitHub noreply identity.
+Files touched: agents_log
+Verification: git commit reported missing author identity before local git config was set.
+
+2026-04-12 15:50 PDT - Agent: Codex
+Action: debugging
+Summary: HTTPS push failed because Git could not prompt for a GitHub username. Switched the local origin remote to SSH for the push.
+Files touched: agents_log
+Verification: git push origin main failed with "could not read Username for 'https://github.com'"; git remote set-url origin git@github.com:illyaom19/cpu-task-scheduler-app.git completed.
