@@ -117,6 +117,26 @@ export function calculateUtilization(tasks) {
     .reduce((total, task) => total + Number(task.wcet) / Number(task.period), 0);
 }
 
+export function calculateHyperperiod(tasks) {
+  const periods = tasks
+    .filter((task) => task.enabled)
+    .map((task) => Number(task.period))
+    .filter((period) => Number.isFinite(period) && period > 0);
+
+  if (periods.length === 0) {
+    return null;
+  }
+
+  const scale = periods.reduce((currentScale, period) => {
+    const places = Math.min(3, decimalPlaces(period));
+    return Math.max(currentScale, 10 ** places);
+  }, 1);
+  const integerPeriods = periods.map((period) => Math.round(period * scale));
+  const hyperperiod = integerPeriods.reduce((current, period) => lcm(current, period));
+
+  return roundTime(hyperperiod / scale);
+}
+
 export function roundTime(value) {
   return Math.round((Number(value) + Number.EPSILON) * 1000) / 1000;
 }
@@ -130,6 +150,34 @@ function assertPositive(errors, prefix, label, value) {
 function numberOr(value, fallback) {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : fallback;
+}
+
+function decimalPlaces(value) {
+  const text = String(value);
+
+  if (text.includes("e-")) {
+    return Number(text.split("e-")[1]) || 0;
+  }
+
+  const decimal = text.split(".")[1];
+  return decimal ? decimal.length : 0;
+}
+
+function gcd(a, b) {
+  let left = Math.abs(a);
+  let right = Math.abs(b);
+
+  while (right !== 0) {
+    const next = right;
+    right = left % right;
+    left = next;
+  }
+
+  return left;
+}
+
+function lcm(a, b) {
+  return Math.abs(a * b) / gcd(a, b);
 }
 
 function cryptoSafeId(prefix) {

@@ -580,9 +580,12 @@ h2 {
 }
 
 .interval {
-  cursor: pointer;
   stroke: rgba(255, 255, 255, 0.12);
   filter: drop-shadow(0 0 5px rgba(255, 138, 31, 0.18));
+}
+
+.interval.execution {
+  cursor: crosshair;
 }
 
 .interval.deferred {
@@ -592,6 +595,7 @@ h2 {
 }
 
 .interval.idle {
+  cursor: default;
   stroke: #3b4652;
 }
 

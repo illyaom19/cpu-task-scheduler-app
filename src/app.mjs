@@ -1,11 +1,13 @@
-import { DEFAULT_SIMULATION_END, createTask, normalizeTaskNames, validateSimulation } from "./model.mjs";
+import { DEFAULT_SIMULATION_END, calculateHyperperiod, createTask, normalizeTaskNames, validateSimulation } from "./model.mjs";
 import { PRESETS, SCENARIOS, scenarioTasks, taskFromPreset } from "./presets.mjs";
 import { renderInspector, renderTimeline } from "./renderer.mjs";
 import { runSimulation } from "./scheduler.mjs";
 
+const initialTasks = scenarioTasks(SCENARIOS[0]);
+
 const state = {
-  tasks: scenarioTasks(SCENARIOS[0]),
-  simulationEnd: SCENARIOS[0].simulationEnd || DEFAULT_SIMULATION_END,
+  tasks: initialTasks,
+  simulationEnd: defaultSimulationEnd(initialTasks),
   result: null,
   selectedTaskId: null,
   selectedInterval: null,
@@ -89,11 +91,20 @@ function bindStaticEvents() {
   elements.timeline.addEventListener("click", (event) => {
     const intervalNode = event.target.closest("[data-interval]");
     if (!intervalNode) {
+      clearTrace();
       return;
     }
 
-    state.selectedInterval = JSON.parse(intervalNode.dataset.interval);
-    renderInspector(elements.inspector, state.selectedInterval);
+    const interval = JSON.parse(intervalNode.dataset.interval);
+    state.selectedInterval = interval;
+
+    if (interval.taskId) {
+      state.selectedTaskId = interval.taskId;
+      refreshTraceView();
+    } else {
+      state.selectedTaskId = null;
+      refreshTraceView();
+    }
   });
 }
 
@@ -123,7 +134,7 @@ function renderScenarioButtons() {
     button.innerHTML = `<strong>${scenario.name}</strong><span>${scenario.description}</span>`;
     button.addEventListener("click", () => {
       state.tasks = scenarioTasks(scenario);
-      state.simulationEnd = scenario.simulationEnd;
+      state.simulationEnd = defaultSimulationEnd(state.tasks, scenario.simulationEnd);
       state.selectedTaskId = null;
       state.selectedInterval = null;
       requestRun();
@@ -240,6 +251,7 @@ function handleTaskAction(event, index) {
 
   if (action === "select") {
     state.selectedTaskId = state.selectedTaskId === state.tasks[index].id ? null : state.tasks[index].id;
+    state.selectedInterval = null;
   }
 
   requestRun();
@@ -260,6 +272,21 @@ function rerun() {
   });
   renderInspector(elements.inspector, state.selectedInterval);
   renderRunState();
+}
+
+function clearTrace() {
+  state.selectedTaskId = null;
+  state.selectedInterval = null;
+  refreshTraceView();
+}
+
+function refreshTraceView() {
+  renderTasks();
+  renderTimeline(elements.timeline, state.result, {
+    selectedTaskId: state.selectedTaskId,
+    showTaskLanes: state.showTaskLanes,
+  });
+  renderInspector(elements.inspector, state.selectedInterval);
 }
 
 function requestRun() {
@@ -351,6 +378,10 @@ function metric(label, value, tone = "") {
       <strong>${value}</strong>
     </div>
   `;
+}
+
+function defaultSimulationEnd(tasks, fallback = DEFAULT_SIMULATION_END) {
+  return calculateHyperperiod(tasks) || fallback;
 }
 
 function toPercent(value) {

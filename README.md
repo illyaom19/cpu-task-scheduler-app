@@ -11,6 +11,7 @@ No install, build, package manager, transpiler, or server is required for normal
 ## What It Does
 
 - Defines periodic real-time tasks with release time, WCET, actual execution time, period, deadline, color, and enabled state.
+- Defaults scenario simulation length to one enabled-task hyperperiod.
 - Generates job instances through a finite simulation horizon.
 - Runs a Look-Ahead Conserving EDF simulation with conservative WCET reservations.
 - Uses discrete P-states: `0`, `0.25`, `0.5`, `0.75`, and `1.0`.

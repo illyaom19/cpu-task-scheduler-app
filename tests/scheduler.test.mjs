@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createTask, generateJobs, normalizeTaskNames, validateSimulation } from "../src/model.mjs";
+import { calculateHyperperiod, createTask, generateJobs, normalizeTaskNames, validateSimulation } from "../src/model.mjs";
 import { requiredDensity, runSimulation, selectPState } from "../src/scheduler.mjs";
 
 const tests = [];
@@ -20,6 +20,35 @@ test("normalizes duplicate task names", () => {
   ]);
 
   assert.deepEqual(tasks.map((task) => task.name), ["Motor", "Motor 2", "Motor 3"]);
+});
+
+test("calculates a hyperperiod from enabled task periods", () => {
+  const tasks = [
+    createTask({ period: 5 }),
+    createTask({ period: 8 }),
+    createTask({ period: 16 }),
+    createTask({ period: 15 }),
+  ];
+
+  assert.equal(calculateHyperperiod(tasks), 240);
+});
+
+test("calculates decimal hyperperiods using scheduler time precision", () => {
+  const tasks = [
+    createTask({ period: 2.5 }),
+    createTask({ period: 7.5 }),
+  ];
+
+  assert.equal(calculateHyperperiod(tasks), 7.5);
+});
+
+test("ignores disabled tasks when calculating hyperperiod", () => {
+  const tasks = [
+    createTask({ period: 4 }),
+    createTask({ period: 99, enabled: false }),
+  ];
+
+  assert.equal(calculateHyperperiod(tasks), 4);
 });
 
 test("validates impossible task timing", () => {

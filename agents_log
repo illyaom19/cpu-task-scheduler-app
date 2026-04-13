@@ -129,3 +129,45 @@ Action: handoff
 Summary: Committed and pushed the design/scaling pass to origin/main. Creating this follow-up log entry so the repository records the successful push.
 Files touched: agents_log
 Verification: git commit created b0e6dea Refine scheduler dashboard layout; git push origin main updated origin/main from 4a84a8a to b0e6dea.
+
+2026-04-12 17:07 PDT - Agent: Codex
+Action: investigation
+Summary: Investigated timeline trace interaction request. Current timeline click only populates the inspector; task trace/focus is only controlled by the task row Trace button.
+Files touched: agents_log
+Verification: Read AGENTS.md, src/app.mjs, src/renderer.mjs, git status, and current timestamp.
+
+2026-04-12 17:07 PDT - Agent: Codex
+Action: edit
+Summary: Updated timeline interaction so clicking an execution interval traces/focuses that task, while clicking idle intervals or empty timeline space clears the trace. The inspector still reflects the clicked interval.
+Files touched: agents_log, src/app.mjs, styles.css
+Verification: pending
+
+2026-04-12 17:07 PDT - Agent: Codex
+Action: test
+Summary: Verified the trace interaction code and existing scheduler tests after the click behavior change.
+Files touched: none
+Verification: node --check passed for src/app.mjs and src/renderer.mjs; node tests/scheduler.test.mjs passed 9 tests.
+
+2026-04-12 17:07 PDT - Agent: Codex
+Action: investigation
+Summary: Investigated hyperperiod default request. The app currently uses each scenario's fixed simulationEnd value, so Balanced ECU starts at 60 instead of its task-period hyperperiod.
+Files touched: agents_log
+Verification: Read AGENTS.md, src/model.mjs, src/app.mjs, tests/scheduler.test.mjs, and git status; noted existing uncommitted trace-click changes.
+
+2026-04-12 17:21 PDT - Agent: Codex
+Action: edit
+Summary: Added enabled-task hyperperiod calculation and changed initial/scenario simulation defaults to use one hyperperiod. Documented the default and added regression tests for integer, decimal, and disabled-task periods.
+Files touched: README.md, agents_log, src/app.mjs, src/model.mjs, tests/scheduler.test.mjs
+Verification: pending
+
+2026-04-12 17:21 PDT - Agent: Codex
+Action: test
+Summary: Verified the hyperperiod default implementation and existing scheduler behavior.
+Files touched: none
+Verification: node --check passed for src/model.mjs, src/app.mjs, and tests/scheduler.test.mjs; node tests/scheduler.test.mjs passed 12 tests; direct module check returned 240 for the default Balanced ECU scenario hyperperiod.
+
+2026-04-13 00:14 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the pending trace-click interaction and hyperperiod default changes to origin/main.
+Files touched: README.md, agents_log, src/app.mjs, src/model.mjs, styles.css, tests/scheduler.test.mjs
+Verification: node --check passed for src/app.mjs, src/model.mjs, src/renderer.mjs, and tests/scheduler.test.mjs; node tests/scheduler.test.mjs passed 12 tests.
