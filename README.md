@@ -16,6 +16,10 @@ No install, build, package manager, transpiler, or server is required for normal
 - Uses discrete P-states: `0`, `0.25`, `0.5`, `0.75`, and `1.0`.
 - Reclaims slack when actual execution finishes before WCET.
 - Renders an SVG schedule timeline and frequency track.
+- Shows a shared CPU execution lane with optional per-task lanes for readability.
+- Supports automatic recomputation or manual Run mode.
+- Provides a combined WCET / Actual Execution Time control for each task.
+- Includes a collapsible algorithm brief in the app shell.
 - Reports deadline misses, idle time, preemptions, utilization, deferred work, and reclaimed slack.
 - Supports built-in ECU-style scenarios, task presets, and JSON import/export.
 

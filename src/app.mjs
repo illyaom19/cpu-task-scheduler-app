@@ -9,6 +9,9 @@ const state = {
   result: null,
   selectedTaskId: null,
   selectedInterval: null,
+  autoRun: true,
+  showTaskLanes: true,
+  stale: false,
 };
 
 const elements = {};
@@ -32,22 +35,47 @@ function bindElements() {
   elements.inspector = document.querySelector("#inspector");
   elements.exportBox = document.querySelector("#export-box");
   elements.importBox = document.querySelector("#import-box");
+  elements.runState = document.querySelector("#run-state");
+  elements.runSimulation = document.querySelector("#run-simulation");
+  elements.autoRun = document.querySelector("#auto-run");
+  elements.showTaskLanes = document.querySelector("#show-task-lanes");
 }
 
 function bindStaticEvents() {
   elements.simulationEnd.addEventListener("input", (event) => {
     state.simulationEnd = Number(event.target.value);
+    requestRun();
+  });
+
+  elements.runSimulation.addEventListener("click", () => {
     rerun();
+  });
+
+  elements.autoRun.addEventListener("change", (event) => {
+    state.autoRun = event.target.checked;
+    if (state.autoRun || !state.result) {
+      rerun();
+    } else {
+      renderRunState();
+    }
+  });
+
+  elements.showTaskLanes.addEventListener("change", (event) => {
+    state.showTaskLanes = event.target.checked;
+    renderTimeline(elements.timeline, state.result, {
+      selectedTaskId: state.selectedTaskId,
+      showTaskLanes: state.showTaskLanes,
+    });
   });
 
   document.querySelector("#add-task").addEventListener("click", () => {
     state.tasks = normalizeTaskNames([...state.tasks, createTask({ index: state.tasks.length })]);
-    rerun();
+    requestRun();
   });
 
   document.querySelector("#clear-tasks").addEventListener("click", () => {
     state.tasks = [];
-    rerun();
+    requestRun();
   });
 
   document.querySelector("#export-json").addEventListener("click", () => {
@@ -79,7 +107,7 @@ function renderPresetButtons() {
     button.textContent = preset.name;
     button.addEventListener("click", () => {
       state.tasks = normalizeTaskNames([...state.tasks, taskFromPreset(preset, state.tasks.length)]);
-      rerun();
+      requestRun();
     });
     elements.presetList.append(button);
   });
@@ -98,7 +126,7 @@ function renderScenarioButtons() {
       state.simulationEnd = scenario.simulationEnd;
       state.selectedTaskId = null;
       state.selectedInterval = null;
-      rerun();
+      requestRun();
     });
     elements.scenarioList.append(button);
   });
@@ -128,15 +156,14 @@ function renderTasks() {
         Phase
         <input type="number" data-field="releaseTime" min="0" step="0.1" value="${task.releaseTime}">
       </label>
-      <label>
-        WCET
-        <input type="range" data-field="wcet" min="0.1" max="12" step="0.1" value="${task.wcet}">
-        <output>${task.wcet}</output>
-      </label>
-      <label>
-        Actual
-        <input type="range" data-field="actualExecutionTime" min="0.1" max="12" step="0.1" value="${task.actualExecutionTime}">
-        <output>${task.actualExecutionTime}</output>
+      <label class="execution-control">
+        Execution
+        <div class="dual-range" style="--actual:${toPercent(task.actualExecutionTime)}%; --wcet:${toPercent(task.wcet)}%;">
+          <span class="duration-rail"></span>
+          <input class="actual-range" type="range" data-field="actualExecutionTime" min="0.1" max="12" step="0.1" value="${task.actualExecutionTime}" aria-label="${escapeHtml(task.name)} actual execution time">
+          <input class="wcet-range" type="range" data-field="wcet" min="0.1" max="12" step="0.1" value="${task.wcet}" aria-label="${escapeHtml(task.name)} worst case execution time">
+        </div>
+        <output><span>Actual ${task.actualExecutionTime}</span><span>WCET ${task.wcet}</span></output>
       </label>
       <label>
         Period
@@ -182,8 +209,12 @@ function updateTaskFromInput(event, index) {
     updated.actualExecutionTime = updated.wcet;
   }
 
+  if (field === "actualExecutionTime" && updated.actualExecutionTime > updated.wcet) {
+    updated.actualExecutionTime = updated.wcet;
+  }
+
   state.tasks = normalizeTaskNames(state.tasks.map((task, taskIndex) => taskIndex === index ? updated : task));
-  rerun();
+  requestRun();
 }
 
 function handleTaskAction(event, index) {
@@ -211,17 +242,49 @@ function handleTaskAction(event, index) {
     state.selectedTaskId = state.selectedTaskId === state.tasks[index].id ? null : state.tasks[index].id;
   }
 
-  rerun();
+  requestRun();
 }
 
 function rerun() {
+  state.stale = false;
   elements.simulationEnd.value = state.simulationEnd;
+  elements.autoRun.checked = state.autoRun;
+  elements.showTaskLanes.checked = state.showTaskLanes;
   state.result = runSimulation(state.tasks, state.simulationEnd);
   renderTasks();
   renderErrors();
   renderSummary();
-  renderTimeline(elements.timeline, state.result, state.selectedTaskId);
+  renderTimeline(elements.timeline, state.result, {
+    selectedTaskId: state.selectedTaskId,
+    showTaskLanes: state.showTaskLanes,
+  });
   renderInspector(elements.inspector, state.selectedInterval);
+  renderRunState();
+}
+
+function requestRun() {
+  if (state.autoRun) {
+    rerun();
+    return;
+  }
+
+  state.stale = true;
+  renderTasks();
+  renderErrors();
+  renderRunState();
+}
+
+function renderRunState() {
+  if (state.stale) {
+    elements.runState.textContent = "Inputs changed. Press Run to refresh the trace.";
+    elements.runState.classList.add("stale");
+    return;
+  }
+
+  elements.runState.textContent = state.autoRun
+    ? "Auto mode armed. EDF priority, conservative look-ahead reservation, discrete P-states."
+    : "Manual mode armed. Press Run after edits to refresh the trace.";
+  elements.runState.classList.remove("stale");
 }
 
 function renderErrors() {
@@ -275,7 +338,7 @@ function importScenario() {
     state.simulationEnd = Number(payload.simulationEnd) || state.simulationEnd;
     state.selectedTaskId = null;
     state.selectedInterval = null;
-    rerun();
+    requestRun();
   } catch (error) {
     elements.errors.innerHTML = `<li>Import failed: ${escapeHtml(error.message)}</li>`;
   }
@@ -288,6 +351,12 @@ function metric(label, value, tone = "") {
       <strong>${value}</strong>
     </div>
   `;
+}
+
+function toPercent(value) {
+  const min = 0.1;
+  const max = 12;
+  return Math.max(0, Math.min(100, ((Number(value) - min) / (max - min)) * 100));
 }
 
 function escapeHtml(value) {

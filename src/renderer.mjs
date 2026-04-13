@@ -1,24 +1,44 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
 
-export function renderTimeline(target, result, selectedTaskId = null) {
+export function renderTimeline(target, result, options = {}) {
+  const { selectedTaskId = null, showTaskLanes = true } = options;
   target.textContent = "";
 
-  if (!result.ok) {
+  if (!result || !result.ok) {
     target.append(emptyState("Fix task inputs to render a schedule."));
     return;
   }
 
-  const width = Math.max(900, result.metrics.simulationEnd * 22);
-  const scheduleHeight = 220;
-  const frequencyHeight = 120;
-  const margin = { left: 54, right: 24, top: 28, bottom: 28 };
+  const enabledTasks = result.tasks.filter((task) => task.enabled);
+  const width = Math.max(980, result.metrics.simulationEnd * 26);
+  const margin = { left: 116, right: 30, top: 30 };
+  const sharedTop = 68;
+  const sharedHeight = 54;
+  const laneGap = 16;
+  const laneHeight = 34;
+  const taskLaneCount = showTaskLanes ? enabledTasks.length : 0;
+  const laneStart = sharedTop + sharedHeight + 58;
+  const taskLaneBlock = taskLaneCount * (laneHeight + laneGap);
+  const axisY = laneStart + taskLaneBlock + 18;
+  const frequencyTop = axisY + 48;
+  const frequencyHeight = 116;
+  const height = frequencyTop + frequencyHeight + 26;
   const plotWidth = width - margin.left - margin.right;
   const timeScale = (time) => margin.left + (time / result.metrics.simulationEnd) * plotWidth;
-  const svg = createSvg(width, scheduleHeight + frequencyHeight);
+  const svg = createSvg(width, height);
 
-  drawAxis(svg, margin, width, scheduleHeight, result.metrics.simulationEnd, timeScale);
-  drawSchedule(svg, result, margin, scheduleHeight, timeScale, selectedTaskId);
-  drawFrequency(svg, result, margin, scheduleHeight, frequencyHeight, timeScale);
+  drawHeader(svg, margin, timeScale, result.metrics.simulationEnd);
+  drawCpuLane(svg, result, margin, sharedTop, sharedHeight, timeScale, selectedTaskId);
+
+  if (showTaskLanes) {
+    drawTaskLanes(svg, result, enabledTasks, margin, laneStart, laneHeight, laneGap, timeScale, selectedTaskId);
+  } else {
+    appendText(svg, margin.left, laneStart, "TASK LANES OFF", "axis-label muted-label");
+  }
+
+  drawAxis(svg, margin, axisY, width, result.metrics.simulationEnd, timeScale);
+  drawFrequency(svg, result, margin, frequencyTop, frequencyHeight, timeScale);
+  appendLegend(svg, margin.left, height - 24);
 
   target.append(svg);
 }
@@ -33,75 +53,122 @@ export function renderInspector(target, interval) {
     <strong>${escapeHtml(interval.event.toUpperCase())}</strong>
     <span>${interval.taskName ? escapeHtml(interval.taskName) : "Processor idle"}</span>
     <span>t=${format(interval.start)} to ${format(interval.end)}</span>
-    <span>frequency=${format(interval.frequency)}</span>
+    <span>P-state ${format(interval.frequency)}</span>
     <span>${escapeHtml(interval.reason || "No reason recorded.")}</span>
   `;
 }
 
-function drawSchedule(svg, result, margin, scheduleHeight, timeScale, selectedTaskId) {
-  const y = margin.top + 34;
-  const trackHeight = 54;
-  const trace = result.trace.filter((interval) => interval.event === "execution" || interval.event === "idle");
-
-  appendText(svg, margin.left, margin.top, "SCHEDULE", "axis-label");
-  appendLine(svg, margin.left, y + trackHeight, timeScale(result.metrics.simulationEnd), y + trackHeight, "track-line");
-
-  trace.forEach((interval) => {
-    const x = timeScale(interval.start);
-    const width = Math.max(2, timeScale(interval.end) - x);
-    const rect = el("rect", {
-      x,
-      y,
-      width,
-      height: trackHeight,
-      rx: 4,
-      class: interval.event === "idle" ? "interval idle" : `interval execution ${interval.deferred ? "deferred" : ""}`,
-      fill: interval.event === "idle" ? "#1e242b" : interval.taskColor,
-      opacity: selectedTaskId && interval.taskId !== selectedTaskId && interval.event !== "idle" ? "0.28" : "1",
-      "data-interval": JSON.stringify(interval),
-    });
-
-    rect.append(el("title", {}, tooltip(interval)));
-    svg.append(rect);
-
-    if (interval.event === "execution" && width > 34) {
-      appendText(svg, x + 8, y + 32, interval.taskName || "", "block-label");
-    }
-  });
-
-  result.jobs.forEach((job) => {
-    const releaseX = timeScale(job.releaseTime);
-    const deadlineX = timeScale(Math.min(job.absoluteDeadline, result.metrics.simulationEnd));
-    appendLine(svg, releaseX, y - 12, releaseX, y + trackHeight + 12, "release-marker");
-    appendLine(svg, deadlineX, y - 16, deadlineX, y + trackHeight + 16, job.missed ? "deadline-marker missed" : "deadline-marker");
-
-    if (job.completedAt != null && job.completedAt <= result.metrics.simulationEnd) {
-      const completeX = timeScale(job.completedAt);
-      appendCircle(svg, completeX, y + trackHeight + 18, 4, "completion-marker");
-    }
-  });
-
-  result.misses.forEach((miss) => {
-    const x = timeScale(Math.min(miss.missTime, result.metrics.simulationEnd));
-    appendText(svg, x + 4, y - 18, "MISS", "miss-label");
-  });
-
-  appendLegend(svg, margin.left, scheduleHeight - 34);
+function drawHeader(svg, margin, timeScale, simulationEnd) {
+  appendText(svg, margin.left, 28, "CPU EXECUTION BUS", "axis-label hot-label");
+  appendLine(svg, margin.left, 42, timeScale(simulationEnd), 42, "glow-line");
 }
 
-function drawFrequency(svg, result, margin, scheduleHeight, frequencyHeight, timeScale) {
-  const top = scheduleHeight + 16;
-  const graphHeight = frequencyHeight - 48;
+function drawCpuLane(svg, result, margin, y, laneHeight, timeScale, selectedTaskId) {
+  appendText(svg, 20, y + 34, "CPU", "lane-label");
+  appendLine(svg, margin.left, y + laneHeight + 8, timeScale(result.metrics.simulationEnd), y + laneHeight + 8, "track-line");
+
+  result.trace
+    .filter((interval) => interval.event === "execution" || interval.event === "idle")
+    .forEach((interval) => {
+      drawInterval(svg, interval, {
+        x: timeScale(interval.start),
+        y,
+        width: Math.max(3, timeScale(interval.end) - timeScale(interval.start)),
+        height: laneHeight,
+        selectedTaskId,
+        label: interval.event === "execution" ? interval.taskName : "IDLE",
+      });
+    });
+
+  drawJobMarkers(svg, result.jobs, result.misses, y, laneHeight, timeScale, result.metrics.simulationEnd);
+}
+
+function drawTaskLanes(svg, result, tasks, margin, startY, laneHeight, laneGap, timeScale, selectedTaskId) {
+  appendText(svg, margin.left, startY - 20, "OPTIONAL TASK LANES", "axis-label");
+
+  tasks.forEach((task, index) => {
+    const y = startY + index * (laneHeight + laneGap);
+    appendText(svg, 20, y + 23, task.name, selectedTaskId === task.id ? "lane-label selected-label" : "lane-label");
+    appendLine(svg, margin.left, y + laneHeight + 6, timeScale(result.metrics.simulationEnd), y + laneHeight + 6, "lane-grid");
+
+    result.trace
+      .filter((interval) => interval.taskId === task.id && interval.event === "execution")
+      .forEach((interval) => {
+        drawInterval(svg, interval, {
+          x: timeScale(interval.start),
+          y,
+          width: Math.max(3, timeScale(interval.end) - timeScale(interval.start)),
+          height: laneHeight,
+          selectedTaskId,
+          label: interval.end - interval.start > 1.4 ? `#${jobIndex(interval.jobId)}` : "",
+        });
+      });
+
+    drawJobMarkers(
+      svg,
+      result.jobs.filter((job) => job.taskId === task.id),
+      result.misses.filter((miss) => miss.taskId === task.id),
+      y,
+      laneHeight,
+      timeScale,
+      result.metrics.simulationEnd,
+    );
+  });
+}
+
+function drawInterval(svg, interval, box) {
+  const isIdle = interval.event === "idle";
+  const isDimmed = box.selectedTaskId && interval.taskId !== box.selectedTaskId && !isIdle;
+  const rect = el("rect", {
+    x: box.x,
+    y: box.y,
+    width: box.width,
+    height: box.height,
+    rx: 4,
+    class: isIdle ? "interval idle" : `interval execution ${interval.deferred ? "deferred" : ""}`,
+    fill: isIdle ? "#131a20" : interval.taskColor,
+    opacity: isDimmed ? "0.22" : "1",
+    "data-interval": JSON.stringify(interval),
+  });
+
+  rect.append(el("title", {}, tooltip(interval)));
+  svg.append(rect);
+
+  if (box.label && box.width > 34) {
+    appendText(svg, box.x + 8, box.y + Math.min(31, box.height - 8), box.label, "block-label");
+  }
+}
+
+function drawJobMarkers(svg, jobs, misses, y, laneHeight, timeScale, simulationEnd) {
+  jobs.forEach((job) => {
+    const releaseX = timeScale(job.releaseTime);
+    const deadlineX = timeScale(Math.min(job.absoluteDeadline, simulationEnd));
+    appendLine(svg, releaseX, y - 9, releaseX, y + laneHeight + 9, "release-marker");
+    appendLine(svg, deadlineX, y - 12, deadlineX, y + laneHeight + 12, job.missed ? "deadline-marker missed" : "deadline-marker");
+
+    if (job.completedAt != null && job.completedAt <= simulationEnd) {
+      appendCircle(svg, timeScale(job.completedAt), y + laneHeight + 15, 3.5, "completion-marker");
+    }
+  });
+
+  misses.forEach((miss) => {
+    const x = timeScale(Math.min(miss.missTime, simulationEnd));
+    appendText(svg, x + 5, y - 15, "MISS", "miss-label");
+  });
+}
+
+function drawFrequency(svg, result, margin, top, height, timeScale) {
+  const graphHeight = height - 44;
   const bottom = top + graphHeight;
   const xEnd = timeScale(result.metrics.simulationEnd);
 
-  appendText(svg, margin.left, top - 2, "P-STATE FREQUENCY", "axis-label");
+  appendText(svg, margin.left, top - 9, "P-STATE FREQUENCY", "axis-label hot-label");
   appendLine(svg, margin.left, bottom, xEnd, bottom, "track-line");
 
   [0, 0.25, 0.5, 0.75, 1].forEach((state) => {
     const y = bottom - state * graphHeight;
     appendLine(svg, margin.left, y, xEnd, y, "frequency-grid");
-    appendText(svg, 10, y + 4, `${Math.round(state * 100)}%`, "tick-label");
+    appendText(svg, 56, y + 4, `${Math.round(state * 100)}%`, "tick-label");
   });
 
   result.trace
@@ -121,25 +188,24 @@ function drawFrequency(svg, result, margin, scheduleHeight, frequencyHeight, tim
     });
 }
 
-function drawAxis(svg, margin, width, scheduleHeight, simulationEnd, timeScale) {
-  const y = scheduleHeight - 10;
-  const tickCount = Math.min(12, Math.max(4, Math.ceil(simulationEnd / 5)));
+function drawAxis(svg, margin, y, width, simulationEnd, timeScale) {
+  const tickCount = Math.min(14, Math.max(4, Math.ceil(simulationEnd / 5)));
 
   appendLine(svg, margin.left, y, width - margin.right, y, "axis-line");
 
   for (let index = 0; index <= tickCount; index += 1) {
     const time = (simulationEnd / tickCount) * index;
     const x = timeScale(time);
-    appendLine(svg, x, y, x, y + 6, "axis-line");
-    appendText(svg, x - 8, y + 22, format(time), "tick-label");
+    appendLine(svg, x, y, x, y + 8, "axis-line");
+    appendText(svg, x - 8, y + 24, format(time), "tick-label");
   }
 }
 
 function appendLegend(svg, x, y) {
   const items = [
-    ["Execution", "#ff8a1f"],
+    ["Execute", "#ff8a1f"],
     ["Deferred", "#ff4d2d"],
-    ["Idle", "#1e242b"],
+    ["Idle", "#131a20"],
     ["Release", "#38bdf8"],
     ["Deadline", "#f43f5e"],
     ["Complete", "#36d399"],
@@ -147,8 +213,8 @@ function appendLegend(svg, x, y) {
 
   items.forEach(([label, color], index) => {
     const offset = index * 116;
-    svg.append(el("rect", { x: x + offset, y, width: 12, height: 12, rx: 2, fill: color, class: "legend-chip" }));
-    appendText(svg, x + offset + 18, y + 10, label, "legend-label");
+    svg.append(el("rect", { x: x + offset, y: y - 10, width: 12, height: 12, rx: 2, fill: color, class: "legend-chip" }));
+    appendText(svg, x + offset + 18, y, label, "legend-label");
   });
 }
 
@@ -158,7 +224,7 @@ function createSvg(width, height) {
     width,
     height,
     role: "img",
-    "aria-label": "Scheduling timeline and frequency chart",
+    "aria-label": "Scheduling timeline with shared CPU lane, optional task lanes, and frequency chart",
   });
 }
 
@@ -183,12 +249,16 @@ function appendText(svg, x, y, text, className) {
   svg.append(node);
 }
 
-function el(name, attributes = {}) {
+function el(name, attributes = {}, text = "") {
   const node = document.createElementNS(SVG_NS, name);
 
   Object.entries(attributes).forEach(([key, value]) => {
     node.setAttribute(key, String(value));
   });
+
+  if (text) {
+    node.textContent = text;
+  }
 
   return node;
 }
@@ -198,9 +268,13 @@ function tooltip(interval) {
     interval.event.toUpperCase(),
     interval.taskName || "Idle",
     `t=${format(interval.start)}-${format(interval.end)}`,
-    `frequency=${format(interval.frequency)}`,
+    `P-state=${format(interval.frequency)}`,
     interval.reason,
   ].filter(Boolean).join("\n");
+}
+
+function jobIndex(jobId) {
+  return String(jobId || "").split("-job-")[1] || "";
 }
 
 function escapeHtml(value) {

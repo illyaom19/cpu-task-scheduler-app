@@ -13,11 +13,33 @@
           <p class="eyebrow">ECU scheduler terminal</p>
           <h1 id="app-title">Look-Ahead Conserving EDF</h1>
         </div>
-        <label class="horizon-control">
-          Simulation end
-          <input id="simulation-end" type="number" min="1" step="1">
-        </label>
+        <div class="terminal-actions" aria-label="Simulation controls">
+          <label class="horizon-control">
+            Simulation end
+            <input id="simulation-end" type="number" min="1" step="1">
+          </label>
+          <button id="run-simulation" class="primary-action" type="button">Run</button>
+          <label class="switch-control">
+            <input id="auto-run" type="checkbox" checked>
+            <span></span>
+            Auto
+          </label>
+          <label class="switch-control">
+            <input id="show-task-lanes" type="checkbox" checked>
+            <span></span>
+            Task lanes
+          </label>
+        </div>
       </section>
+
+      <details class="algorithm-brief">
+        <summary>Algorithm Brief</summary>
+        <p>
+          The scheduler expands periodic tasks into jobs, chooses ready work by earliest absolute deadline,
+          reserves future WCET demand conservatively, and drops to the lowest feasible P-state when slack
+          exists. When actual execution finishes early, unused WCET reservation becomes reclaimed slack.
+        </p>
+      </details>
 
       <section class="workspace" aria-label="Scheduler workspace">
         <aside class="control-panel">
@@ -47,7 +69,7 @@
         <section class="simulation-panel" aria-label="Simulation results">
           <div class="section-header">
             <h2>Trace</h2>
-            <p>EDF priority, conservative look-ahead reservation, discrete P-states.</p>
+            <p id="run-state">EDF priority, conservative look-ahead reservation, discrete P-states.</p>
           </div>
           <div id="summary" class="summary-grid" aria-live="polite"></div>
           <div id="timeline" class="timeline-shell"></div>

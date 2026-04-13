@@ -81,3 +81,45 @@ Action: handoff
 Summary: Initial commit was amended with the push troubleshooting log and pushed to origin/main over SSH. Creating this log-only follow-up so the repository records the successful push.
 Files touched: agents_log
 Verification: ssh -T git@github.com authenticated as illyaom19; git push origin main created the remote main branch.
+
+2026-04-12 16:09 PDT - Agent: Codex
+Action: investigation
+Summary: Started the next development pass from the design review answers: stronger droid mechanic ECU terminal theme, balanced dashboard, more orange/glow, shared CPU lane with optional task lanes, combined WCET/Actual slider, auto mode plus Run button, collapsible algorithm explanation, and timeline readability first.
+Files touched: agents_log
+Verification: Read AGENTS.md, PROJECT_VISION.md, PROJECT_SPECS.md, agents_log, and confirmed git status was clean on main tracking origin/main.
+
+2026-04-12 16:45 PDT - Agent: Codex
+Action: edit
+Summary: Implemented the selected design pass: stronger ECU terminal styling with orange glow, collapsible algorithm brief, Run button with Auto mode toggle, task lane toggle, combined WCET/Actual slider, and a clearer timeline with shared CPU lane plus optional per-task lanes.
+Files touched: README.md, agents_log, index.html, src/app.mjs, src/renderer.mjs, styles.css
+Verification: pending
+
+2026-04-12 16:45 PDT - Agent: Codex
+Action: test
+Summary: Verified the updated app modules and scheduler tests, then started the static server for local review.
+Files touched: none
+Verification: node --check passed for src/app.mjs, src/renderer.mjs, src/scheduler.mjs, and tests/scheduler.test.mjs; node tests/scheduler.test.mjs passed 9 tests; curl -I http://127.0.0.1:8000/ returned HTTP 200.
+
+2026-04-12 16:51 PDT - Agent: Codex
+Action: investigation
+Summary: Investigated the requested scaling/layout fit fix. The main overflow risk is the task editor grid inside the side control panel, plus summary/action grids at narrower widths.
+Files touched: agents_log
+Verification: Read AGENTS.md, PROJECT_VISION.md, agents_log, git status, and relevant styles.css layout rules.
+
+2026-04-12 16:55 PDT - Agent: Codex
+Action: edit
+Summary: Applied a scaling/layout fit fix so controls stay inside their sections. Task rows now use a local two-column scaling grid inside the side panel, while header controls, summary metrics, and JSON panels auto-fit within available width.
+Files touched: agents_log, styles.css
+Verification: pending
+
+2026-04-12 16:55 PDT - Agent: Codex
+Action: test
+Summary: Verified the scaling-only change did not break JavaScript modules or scheduler behavior, and confirmed the local server serves the updated stylesheet.
+Files touched: none
+Verification: node --check passed for src/app.mjs and src/renderer.mjs; node tests/scheduler.test.mjs passed 9 tests; curl -I http://127.0.0.1:8000/styles.css returned HTTP 200.
+
+2026-04-12 17:00 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the current design/scaling pass to origin/main. Scope is the updated dashboard controls, timeline rendering, styling fit fixes, README, and agent log.
+Files touched: README.md, agents_log, index.html, src/app.mjs, src/renderer.mjs, styles.css
+Verification: node --check passed for src/app.mjs, src/renderer.mjs, and src/scheduler.mjs; node tests/scheduler.test.mjs passed 9 tests.
