@@ -623,3 +623,20 @@ Action: handoff
 Summary: Preparing to commit and push the task-lane marker and metadata update to origin/main.
 Files touched: agents_log, index.html, src/renderer.mjs, styles.css
 Verification: pending final pre-commit checks.
+2026-04-14 11:24 PDT - Agent: Codex
+Action: edit
+Summary: Starting educational mode implementation: opt-in ready-job bucket, scheduler decision metadata, insertion animation, and expanded WHICH/WHEN/WHY reasoning during playback.
+Files touched: agents_log, index.html, src/app.mjs, src/scheduler.mjs, src/renderer.mjs, styles.css
+Verification: not run
+
+2026-04-14 11:29 PDT - Agent: Codex
+Action: test
+Summary: Verified educational mode implementation after adding ready-job decision metadata, an opt-in Available Tasks panel, playback insertion cue, and expanded WHY reasoning.
+Files touched: agents_log, index.html, src/app.mjs, src/scheduler.mjs, src/renderer.mjs, styles.css, tests/scheduler.test.mjs
+Verification: node --check passed for src/app.mjs, src/renderer.mjs, src/scheduler.mjs, src/model.mjs, and src/presets.mjs; node tests/scheduler.test.mjs passed 17 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=educational-mode-20260414 returned HTTP 200.
+
+2026-04-14 11:31 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the educational mode implementation to origin/main.
+Files touched: agents_log
+Verification: git status and git diff --stat reviewed before staging.

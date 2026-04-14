@@ -18,8 +18,10 @@ const state = {
   playbackTimeAtStart: 0,
   playbackFrameId: null,
   stepFrameId: null,
+  stepAnimating: false,
   playbackInterval: null,
   playbackMiss: null,
+  educationalMode: false,
 };
 
 const elements = {};
@@ -53,6 +55,8 @@ function bindElements() {
   elements.playbackSlider = document.querySelector("#playback-slider");
   elements.playbackReadout = document.querySelector("#playback-readout");
   elements.playbackCurrent = document.querySelector("#playback-current");
+  elements.educationMode = document.querySelector("#education-mode");
+  elements.educationPanel = document.querySelector("#education-panel");
 }
 
 function bindStaticEvents() {
@@ -79,6 +83,16 @@ function bindStaticEvents() {
 
   elements.playbackSlider.addEventListener("input", (event) => {
     seekPlayback(Number(event.target.value));
+  });
+
+  elements.educationMode.addEventListener("change", (event) => {
+    state.educationalMode = event.target.checked;
+
+    if (state.educationalMode && state.result?.ok) {
+      setPlaybackTime(state.playbackTime);
+    }
+
+    renderPlaybackFrame({ followPlayhead: false });
   });
 
   document.querySelector("#add-task").addEventListener("click", () => {
@@ -407,6 +421,7 @@ function rerun() {
   renderTasks();
   renderErrors();
   renderSummary();
+  renderEducationalPanel();
   renderTimeline(elements.timeline, state.result, timelineOptions());
   renderCurrentInspector();
   renderRunState();
@@ -420,6 +435,7 @@ function clearTrace() {
 
 function refreshTraceView() {
   renderTasks();
+  renderEducationalPanel();
   renderTimeline(elements.timeline, state.result, timelineOptions());
   renderCurrentInspector();
 }
@@ -478,6 +494,56 @@ function renderSummary() {
     ${metric("Avg P-state", metrics.averageFrequency)}
     ${metric("Deferred", metrics.deferredWork)}
     ${metric("Reclaimed", metrics.reclaimedSlack)}
+  `;
+}
+
+function renderEducationalPanel() {
+  if (!elements.educationPanel) {
+    return;
+  }
+
+  elements.educationPanel.hidden = !state.educationalMode;
+  elements.educationMode.checked = state.educationalMode;
+
+  if (!state.educationalMode) {
+    elements.educationPanel.textContent = "";
+    return;
+  }
+
+  if (!state.result?.ok) {
+    elements.educationPanel.innerHTML = `
+      <div class="education-header">
+        <strong>Available Tasks</strong>
+        <span>Fix task inputs to inspect scheduler choices.</span>
+      </div>
+    `;
+    return;
+  }
+
+  const interval = state.playbackInterval || activeIntervalAt(state.playbackTime);
+  const decision = interval?.decision;
+  const availableJobs = decision?.availableJobs || [];
+  const selectedJobId = decision?.selectedJobId || null;
+  const modeLabel = interval?.event === "idle" ? "IDLE" : "EDF PICK";
+  const jobCards = availableJobs.length > 0
+    ? availableJobs.map((job) => `
+      <div class="education-job ${job.jobId === selectedJobId ? "selected" : ""}" style="--task-color:${job.taskColor};">
+        <strong>${escapeHtml(job.taskName)} #${job.instance}</strong>
+        <span>Deadline t=${formatPlaybackTime(job.absoluteDeadline)}</span>
+        <span>Remaining ${formatPlaybackTime(job.remainingActual)}</span>
+      </div>
+    `).join("")
+    : `<div class="education-idle">IDLE: no ready jobs are available at this moment.</div>`;
+
+  elements.educationPanel.innerHTML = `
+    <div class="education-header">
+      <strong>Available Tasks</strong>
+      <span>${modeLabel} at t=${formatPlaybackTime(state.playbackTime)}</span>
+    </div>
+    <div class="education-bucket">
+      ${jobCards}
+    </div>
+    <p>${escapeHtml(decision?.why || "Move the timeline or start playback to inspect a scheduler choice.")}</p>
   `;
 }
 
@@ -568,6 +634,7 @@ function animateStepTo(target) {
   cancelStepFrame();
   state.playbackRunning = false;
   state.playbackModeActive = true;
+  state.stepAnimating = true;
 
   const startTime = state.playbackTime;
   const endTime = clamp(target, 0, state.result.metrics.simulationEnd);
@@ -587,6 +654,8 @@ function animateStepTo(target) {
     }
 
     state.stepFrameId = null;
+    state.stepAnimating = false;
+    renderPlaybackFrame({ followPlayhead: true });
   };
 
   state.stepFrameId = requestAnimationFrame(tick);
@@ -623,6 +692,7 @@ function tickPlayback(timestamp) {
 }
 
 function renderPlaybackFrame(options = {}) {
+  renderEducationalPanel();
   renderTimeline(elements.timeline, state.result, timelineOptions());
   renderCurrentInspector();
   renderPlaybackControls();
@@ -640,6 +710,7 @@ function resetPlaybackForTrace() {
   state.playbackModeActive = false;
   state.playbackStartedAt = 0;
   state.playbackTimeAtStart = 0;
+  state.stepAnimating = false;
   state.playbackInterval = null;
   state.playbackMiss = null;
 }
@@ -656,6 +727,8 @@ function cancelStepFrame() {
     cancelAnimationFrame(state.stepFrameId);
     state.stepFrameId = null;
   }
+
+  state.stepAnimating = false;
 }
 
 function renderPlaybackControls() {
@@ -695,6 +768,8 @@ function timelineOptions() {
     playbackTime: state.playbackTime,
     playbackModeActive: state.playbackModeActive,
     playbackRunning: state.playbackRunning,
+    playbackStepping: state.stepAnimating,
+    educationalMode: state.educationalMode,
   };
 }
 

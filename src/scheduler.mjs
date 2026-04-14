@@ -48,6 +48,7 @@ export function runSimulation(tasks, simulationEnd, options = {}) {
         frequency: 0,
         deferred: false,
         reason: nextRelease == null ? "No remaining releases before horizon." : "Waiting for next task release.",
+        decision: buildIdleDecision(time, nextRelease),
       });
       time = end;
       lastRunningJobId = null;
@@ -75,13 +76,14 @@ export function runSimulation(tasks, simulationEnd, options = {}) {
       jobId: job.jobId,
       taskId: job.taskId,
       taskName: job.taskName,
-      taskColor: job.taskColor,
-      frequency: activeFrequency,
-      deferred: activeFrequency < 1,
-      reason: activeFrequency < 1
-        ? "Reserved future capacity allows this job to run below full speed."
-        : "Feasibility requires full-speed execution.",
-    });
+        taskColor: job.taskColor,
+        frequency: activeFrequency,
+        deferred: activeFrequency < 1,
+        reason: activeFrequency < 1
+          ? "Reserved future capacity allows this job to run below full speed."
+          : "Feasibility requires full-speed execution.",
+        decision: buildExecutionDecision(time, job, readyJobs, activeFrequency),
+      });
 
     if (activeFrequency < 1) {
       deferredWork += duration * (1 - activeFrequency);
@@ -263,6 +265,7 @@ function pushInterval(trace, interval) {
     frequency: interval.frequency,
     deferred: Boolean(interval.deferred),
     reason: interval.reason || "",
+    decision: interval.decision || null,
     deadlineMiss: null,
   });
 }
@@ -279,8 +282,54 @@ function pushInstant(trace, event) {
     frequency: event.frequency || 0,
     deferred: false,
     reason: event.reason || "",
+    decision: null,
     deadlineMiss: null,
   });
+}
+
+function buildIdleDecision(time, nextRelease) {
+  return {
+    time: roundTime(time),
+    selectedJobId: null,
+    selectedTaskId: null,
+    availableJobs: [],
+    contenders: [],
+    why: nextRelease == null
+      ? "No ready jobs remain before the simulation ends, so the CPU stays idle."
+      : `No released jobs have remaining execution, so the CPU waits for the next release at t=${roundTime(nextRelease)}.`,
+  };
+}
+
+function buildExecutionDecision(time, selectedJob, readyJobs, frequency) {
+  const availableJobs = readyJobs.map(summarizeJob);
+  const contenders = readyJobs.filter((job) => job.jobId !== selectedJob.jobId).map(summarizeJob);
+  const nearest = contenders[0];
+  const comparison = nearest
+    ? `${selectedJob.taskName} has the earliest absolute deadline at t=${roundTime(selectedJob.absoluteDeadline)}; next closest is ${nearest.taskName} #${nearest.instance} at t=${nearest.absoluteDeadline}.`
+    : `${selectedJob.taskName} is the only ready job with remaining execution.`;
+
+  return {
+    time: roundTime(time),
+    selectedJobId: selectedJob.jobId,
+    selectedTaskId: selectedJob.taskId,
+    availableJobs,
+    contenders,
+    why: `${comparison} EDF chooses the earliest deadline, then look-ahead selects P-state ${roundTime(frequency)} to protect future WCET demand.`,
+  };
+}
+
+function summarizeJob(job) {
+  return {
+    jobId: job.jobId,
+    taskId: job.taskId,
+    taskName: job.taskName,
+    taskColor: job.taskColor,
+    instance: job.instance,
+    releaseTime: roundTime(job.releaseTime),
+    absoluteDeadline: roundTime(job.absoluteDeadline),
+    remainingActual: roundTime(job.remainingActual),
+    remainingReserved: roundTime(job.remainingReserved),
+  };
 }
 
 function uniqueBy(items, getKey) {

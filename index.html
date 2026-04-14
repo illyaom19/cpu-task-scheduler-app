@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Look-Ahead EDF CPU Scheduler</title>
-    <link rel="stylesheet" href="styles.css?v=task-lane-metadata-20260414">
+    <link rel="stylesheet" href="styles.css?v=educational-mode-20260414">
   </head>
   <body>
     <main class="app-shell">
@@ -54,6 +54,10 @@
             <button id="playback-prev" type="button" aria-label="Previous task switch">Previous</button>
             <button id="playback-toggle" type="button" aria-label="Play">Play</button>
             <button id="playback-next" type="button" aria-label="Next task switch">Next</button>
+            <label class="education-toggle">
+              <input id="education-mode" type="checkbox">
+              Educational Mode
+            </label>
             <label class="playback-scrubber">
               Timeline
               <input id="playback-slider" type="range" min="0" max="0" step="0.1" value="0">
@@ -64,6 +68,7 @@
             </div>
           </div>
           <div id="summary" class="summary-grid" aria-live="polite"></div>
+          <div id="education-panel" class="education-panel" hidden></div>
           <div id="timeline" class="timeline-shell"></div>
           <div id="inspector" class="inspector"></div>
 
@@ -88,6 +93,6 @@
       </section>
     </main>
 
-    <script type="module" src="src/app.mjs?v=task-lane-metadata-20260414"></script>
+    <script type="module" src="src/app.mjs?v=educational-mode-20260414"></script>
   </body>
 </html>

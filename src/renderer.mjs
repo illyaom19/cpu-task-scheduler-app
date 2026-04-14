@@ -11,6 +11,8 @@ export function renderTimeline(target, result, options = {}) {
     playbackTime = 0,
     playbackModeActive = false,
     playbackRunning = false,
+    playbackStepping = false,
+    educationalMode = false,
   } = options;
   target.textContent = "";
 
@@ -49,6 +51,8 @@ export function renderTimeline(target, result, options = {}) {
     miss: activeMiss,
     box: null,
     running: playbackRunning,
+    stepping: playbackStepping,
+    educationalMode,
     time: playheadTime,
     width,
     height,
@@ -166,6 +170,8 @@ function drawCpuLane(svg, contentLayer, result, margin, y, laneHeight, timeScale
           width: Math.max(3, timeScale(end) - timeScale(interval.start)),
           height: laneHeight,
         };
+
+        drawEducationalInsertion(svg, interval, playbackCue, timeScale);
       }
     });
 
@@ -237,6 +243,44 @@ function drawInterval(svg, interval, box) {
   if (box.label && labelFits(box.label, box.width)) {
     appendText(box.parent || svg, box.x + 8, box.y + Math.min(31, box.height - 8), box.label, `block-label ${isIdle ? "idle-block-label" : ""}`);
   }
+}
+
+function drawEducationalInsertion(svg, interval, cue, timeScale) {
+  if (!cue.educationalMode || (!cue.running && !cue.stepping) || !cue.box) {
+    return;
+  }
+
+  const elapsed = cue.time - interval.start;
+  const duration = 0.75;
+
+  if (elapsed < 0 || elapsed > duration) {
+    return;
+  }
+
+  const progress = clamp(elapsed / duration, 0, 1);
+  const eased = 1 - (1 - progress) ** 3;
+  const isIdle = interval.event === "idle";
+  const label = isIdle ? "IDLE" : interval.taskName || "Task";
+  const width = Math.max(74, Math.min(138, String(label).length * 8 + 22));
+  const x = Math.max(timeScale(interval.start), cue.box.x + 4);
+  const startY = Math.max(10, cue.box.y - 54);
+  const y = startY + (cue.box.y - startY) * eased;
+  const group = el("g", {
+    class: `education-insert ${isIdle ? "idle" : ""}`,
+    opacity: String(0.45 + 0.55 * (1 - Math.abs(progress - 0.5))),
+  });
+
+  group.append(el("rect", {
+    x,
+    y,
+    width,
+    height: 26,
+    rx: 6,
+    fill: isIdle ? "#1a222b" : interval.taskColor,
+  }));
+  appendText(group, x + 10, y + 17, truncate(label, 13), "education-insert-label");
+  appendLine(group, x + 8, y + 30, x + 8, cue.box.y + cue.box.height - 4, "education-insert-line");
+  svg.append(group);
 }
 
 function labelFits(label, width) {
@@ -376,7 +420,7 @@ function intervalBubbleLines(interval) {
   const isIdle = interval.event === "idle";
   const which = isIdle ? "IDLE" : `${interval.taskName || "Task"} #${jobIndex(interval.jobId)}`;
   const when = `t=${format(interval.start)} -> ${format(interval.end)} (${format(interval.end - interval.start)})`;
-  const why = `P-state ${format(interval.frequency)} | ${interval.reason || "No reason recorded."}`;
+  const why = interval.decision?.why || `P-state ${format(interval.frequency)} | ${interval.reason || "No reason recorded."}`;
 
   return [
     { label: "WHICH", value: which },

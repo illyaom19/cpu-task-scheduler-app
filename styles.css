@@ -346,7 +346,7 @@ h2 {
 
 .playback-bar {
   display: grid;
-  grid-template-columns: repeat(4, auto) minmax(160px, 1fr) auto;
+  grid-template-columns: repeat(4, auto) minmax(128px, auto) minmax(160px, 1fr) auto;
   align-items: center;
   gap: 8px;
   padding: 8px;
@@ -386,6 +386,22 @@ h2 {
 
 #playback-next::before {
   content: "\2192";
+}
+
+.education-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.education-toggle input {
+  accent-color: var(--line-hot);
 }
 
 .playback-readout {
@@ -646,6 +662,80 @@ h2 {
   gap: 6px;
 }
 
+.education-panel {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(54, 211, 153, 0.28);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(12, 26, 25, 0.88), rgba(9, 14, 18, 0.9));
+}
+
+.education-panel[hidden] {
+  display: none;
+}
+
+.education-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.education-header strong {
+  color: #d8fff1;
+  font-size: 0.86rem;
+  text-transform: uppercase;
+}
+
+.education-header span,
+.education-panel p {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.education-panel p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.education-bucket {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 148px), 1fr));
+  gap: 8px;
+}
+
+.education-job,
+.education-idle {
+  min-height: 58px;
+  padding: 8px;
+  border: 1px solid rgba(151, 161, 173, 0.22);
+  border-radius: 8px;
+  background: rgba(10, 14, 18, 0.72);
+}
+
+.education-job {
+  display: grid;
+  gap: 4px;
+  border-left: 4px solid var(--task-color);
+}
+
+.education-job.selected {
+  border-color: var(--task-color);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2), 0 0 18px color-mix(in srgb, var(--task-color) 48%, transparent);
+}
+
+.education-job strong {
+  color: var(--text);
+  font-size: 0.84rem;
+}
+
+.education-job span,
+.education-idle {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
 .metric {
   display: grid;
   gap: 5px;
@@ -757,6 +847,22 @@ h2 {
   paint-order: stroke fill;
   stroke: rgba(0, 0, 0, 0.72);
   stroke-width: 3px;
+}
+
+.education-insert-label {
+  fill: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  paint-order: stroke fill;
+  stroke: rgba(0, 0, 0, 0.68);
+  stroke-width: 3px;
+}
+
+.education-insert-line {
+  stroke: #36d399;
+  stroke-width: 2;
+  stroke-dasharray: 4 4;
+  filter: drop-shadow(0 0 5px rgba(54, 211, 153, 0.75));
 }
 
 .idle-block-label {

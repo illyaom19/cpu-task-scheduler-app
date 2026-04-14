@@ -161,6 +161,28 @@ test("keeps non-instant trace intervals non-negative", () => {
     .forEach((interval) => assert.ok(interval.end > interval.start, JSON.stringify(interval)));
 });
 
+test("records EDF decision metadata for ready jobs", () => {
+  const result = runSimulation([
+    createTask({ id: "early", name: "Early", releaseTime: 0, wcet: 1, actualExecutionTime: 1, period: 10, deadline: 4 }),
+    createTask({ id: "late", name: "Late", releaseTime: 0, wcet: 1, actualExecutionTime: 1, period: 10, deadline: 8 }),
+  ], 10);
+  const firstExecution = result.trace.find((interval) => interval.event === "execution");
+
+  assert.equal(firstExecution.decision.selectedTaskId, "early");
+  assert.deepEqual(firstExecution.decision.availableJobs.map((job) => job.taskName), ["Early", "Late"]);
+  assert.match(firstExecution.decision.why, /earliest absolute deadline/i);
+});
+
+test("records idle decision metadata when no jobs are ready", () => {
+  const result = runSimulation([
+    createTask({ id: "future", name: "Future", releaseTime: 3, wcet: 1, actualExecutionTime: 1, period: 10, deadline: 4 }),
+  ], 5);
+  const idle = result.trace.find((interval) => interval.event === "idle");
+
+  assert.deepEqual(idle.decision.availableJobs, []);
+  assert.match(idle.decision.why, /next release at t=3/i);
+});
+
 test("excludes disabled tasks", () => {
   const result = runSimulation([
     createTask({ id: "off", name: "Off", enabled: false, releaseTime: 0, wcet: 10, actualExecutionTime: 10, period: 10, deadline: 10 }),
