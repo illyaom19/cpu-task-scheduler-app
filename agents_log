@@ -569,3 +569,21 @@ Action: handoff
 Summary: Preparing to commit and push the terminal header title cleanup to origin/main.
 Files touched: agents_log, index.html, styles.css
 Verification: pending final pre-commit checks.
+
+2026-04-14 11:07 PDT - Agent: Codex
+Action: edit
+Summary: Starting playback polish: pause/play icon state, animated switch stepping, white deadline markers, and nicer timeline tick intervals.
+Files touched: agents_log
+Verification: not run
+
+2026-04-14 11:09 PDT - Agent: Codex
+Action: test
+Summary: Added pause icon state while playback runs, animated previous/next switch stepping while paused, white deadline markers, and nice-number timeline ticks.
+Files touched: agents_log, index.html, src/app.mjs, src/renderer.mjs, styles.css
+Verification: node --check passed for src/app.mjs, src/renderer.mjs, src/model.mjs, and src/presets.mjs; node tests/scheduler.test.mjs passed 15 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=playback-polish-20260414 returned HTTP 200 after restarting the static server.
+
+2026-04-14 11:10 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the playback polish updates to origin/main.
+Files touched: agents_log, index.html, src/app.mjs, src/renderer.mjs, styles.css
+Verification: pending final pre-commit checks.

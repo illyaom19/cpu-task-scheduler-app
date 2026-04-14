@@ -17,6 +17,7 @@ const state = {
   playbackStartedAt: 0,
   playbackTimeAtStart: 0,
   playbackFrameId: null,
+  stepFrameId: null,
   playbackInterval: null,
   playbackMiss: null,
 };
@@ -498,6 +499,8 @@ function startPlayback() {
     return;
   }
 
+  cancelStepFrame();
+
   const simulationEnd = state.result.metrics.simulationEnd;
   if (state.playbackTime >= simulationEnd) {
     state.playbackTime = 0;
@@ -521,6 +524,7 @@ function pausePlayback() {
 
 function resetPlayback() {
   cancelPlaybackFrame();
+  cancelStepFrame();
   state.playbackRunning = false;
   state.playbackModeActive = true;
   state.playbackTime = 0;
@@ -535,11 +539,9 @@ function seekPlayback(time) {
   }
 
   cancelPlaybackFrame();
+  cancelStepFrame();
   state.playbackRunning = false;
-  state.playbackModeActive = true;
-  state.playbackTime = clamp(time, 0, state.result.metrics.simulationEnd);
-  state.playbackInterval = activeIntervalAt(state.playbackTime);
-  state.playbackMiss = activeMissAt(state.playbackTime);
+  setPlaybackTime(time);
   renderPlaybackFrame({ followPlayhead: true });
 }
 
@@ -558,7 +560,43 @@ function stepPlaybackSwitch(direction) {
     ? [...switchTimes].reverse().find((time) => time < current - 0.000001) ?? 0
     : switchTimes.find((time) => time > current + 0.000001) ?? state.result.metrics.simulationEnd;
 
-  seekPlayback(target);
+  animateStepTo(target);
+}
+
+function animateStepTo(target) {
+  cancelPlaybackFrame();
+  cancelStepFrame();
+  state.playbackRunning = false;
+  state.playbackModeActive = true;
+
+  const startTime = state.playbackTime;
+  const endTime = clamp(target, 0, state.result.metrics.simulationEnd);
+  const distance = Math.abs(endTime - startTime);
+  const duration = Math.min(900, Math.max(220, distance * 80));
+  const startedAt = performance.now();
+
+  const tick = (timestamp) => {
+    const progress = clamp((timestamp - startedAt) / duration, 0, 1);
+    const eased = 1 - (1 - progress) ** 3;
+    setPlaybackTime(startTime + (endTime - startTime) * eased);
+    renderPlaybackFrame({ followPlayhead: true });
+
+    if (progress < 1) {
+      state.stepFrameId = requestAnimationFrame(tick);
+      return;
+    }
+
+    state.stepFrameId = null;
+  };
+
+  state.stepFrameId = requestAnimationFrame(tick);
+}
+
+function setPlaybackTime(time) {
+  state.playbackModeActive = true;
+  state.playbackTime = clamp(time, 0, state.result.metrics.simulationEnd);
+  state.playbackInterval = activeIntervalAt(state.playbackTime);
+  state.playbackMiss = activeMissAt(state.playbackTime);
 }
 
 function tickPlayback(timestamp) {
@@ -576,6 +614,7 @@ function tickPlayback(timestamp) {
   if (state.playbackTime >= simulationEnd) {
     state.playbackRunning = false;
     state.playbackFrameId = null;
+    setPlaybackTime(simulationEnd);
     renderPlaybackControls();
     return;
   }
@@ -595,6 +634,7 @@ function renderPlaybackFrame(options = {}) {
 
 function resetPlaybackForTrace() {
   cancelPlaybackFrame();
+  cancelStepFrame();
   state.playbackTime = 0;
   state.playbackRunning = false;
   state.playbackModeActive = false;
@@ -608,6 +648,13 @@ function cancelPlaybackFrame() {
   if (state.playbackFrameId != null) {
     cancelAnimationFrame(state.playbackFrameId);
     state.playbackFrameId = null;
+  }
+}
+
+function cancelStepFrame() {
+  if (state.stepFrameId != null) {
+    cancelAnimationFrame(state.stepFrameId);
+    state.stepFrameId = null;
   }
 }
 

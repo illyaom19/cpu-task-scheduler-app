@@ -414,16 +414,44 @@ function wrapText(value, maxWidth) {
 }
 
 function drawAxis(svg, margin, y, width, simulationEnd, timeScale) {
-  const tickCount = Math.min(14, Math.max(4, Math.ceil(simulationEnd / 5)));
+  const ticks = timelineTicks(simulationEnd);
 
   appendLine(svg, margin.left, y, width - margin.right, y, "axis-line");
 
-  for (let index = 0; index <= tickCount; index += 1) {
-    const time = (simulationEnd / tickCount) * index;
+  ticks.forEach((time) => {
     const x = timeScale(time);
     appendLine(svg, x, y, x, y + 8, "axis-line");
     appendText(svg, x - 8, y + 24, format(time), "tick-label");
+  });
+}
+
+function timelineTicks(simulationEnd) {
+  const targetIntervals = Math.max(4, Math.min(12, Math.floor(simulationEnd / 8)));
+  const step = niceTickStep(simulationEnd / targetIntervals);
+  const ticks = [];
+
+  for (let time = 0; time <= simulationEnd + 0.000001; time += step) {
+    ticks.push(roundTick(time));
   }
+
+  if (ticks[ticks.length - 1] !== simulationEnd) {
+    ticks.push(roundTick(simulationEnd));
+  }
+
+  return ticks;
+}
+
+function niceTickStep(rawStep) {
+  const exponent = Math.floor(Math.log10(rawStep));
+  const magnitude = 10 ** exponent;
+  const normalized = rawStep / magnitude;
+  const nice = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+
+  return nice * magnitude;
+}
+
+function roundTick(value) {
+  return Math.round((Number(value) + Number.EPSILON) * 1000) / 1000;
 }
 
 function appendLegend(svg, x, y) {

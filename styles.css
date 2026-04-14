@@ -380,6 +380,10 @@ h2 {
   content: "\25b6";
 }
 
+#playback-toggle[aria-label="Pause"]::before {
+  content: "\275a\275a";
+}
+
 #playback-next::before {
   content: "\2192";
 }
@@ -761,12 +765,13 @@ h2 {
 }
 
 .deadline-marker {
-  stroke: var(--danger);
+  stroke: #ffffff;
   stroke-width: 1.5;
-  filter: drop-shadow(0 0 4px rgba(244, 63, 94, 0.5));
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
 }
 
 .deadline-marker.missed {
+  stroke: var(--danger);
   stroke-width: 3;
 }
 
