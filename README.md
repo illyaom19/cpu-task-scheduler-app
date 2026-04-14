@@ -11,18 +11,18 @@ No install, build, package manager, transpiler, or server is required for normal
 ## What It Does
 
 - Defines periodic real-time tasks with release time, WCET, actual execution time, period, deadline, color, and enabled state.
-- Defaults scenario simulation length to one enabled-task hyperperiod.
+- Defaults the simulation length to 100 time units.
 - Generates job instances through a finite simulation horizon.
 - Runs a Look-Ahead Conserving EDF simulation with conservative WCET reservations.
 - Uses discrete P-states: `0`, `0.25`, `0.5`, `0.75`, and `1.0`.
 - Reclaims slack when actual execution finishes before WCET.
 - Renders an SVG schedule timeline and frequency track.
-- Shows a shared CPU execution lane with optional per-task lanes for readability.
-- Supports automatic recomputation or manual Run mode.
+- Shows a shared CPU execution lane with per-task lanes for readability.
+- Automatically recomputes when task data changes.
 - Provides a combined WCET / Actual Execution Time control for each task.
 - Includes a collapsible algorithm brief in the app shell.
 - Reports deadline misses, idle time, preemptions, utilization, deferred work, and reclaimed slack.
-- Supports built-in ECU-style scenarios, task presets, and JSON import/export.
+- Supports built-in ECU-style scenarios, premade task selection, and JSON import/export.
 
 ## Test
 

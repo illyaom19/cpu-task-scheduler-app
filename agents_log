@@ -347,3 +347,33 @@ Action: handoff
 Summary: Preparing to commit and push the quick-time playback bubble and animation changes to origin/main.
 Files touched: agents_log, index.html, src/app.mjs, src/renderer.mjs, styles.css
 Verification: pending final pre-commit checks
+
+2026-04-13 22:42 PDT - Agent: Codex
+Action: edit
+Summary: Starting focused trace vertical sizing update to make the schedule viewport taller and more readable.
+Files touched: agents_log
+Verification: not run
+
+2026-04-13 22:43 PDT - Agent: Codex
+Action: test
+Summary: Increased trace vertical dimensions for a larger CPU lane, task lanes, markers, and frequency track while preserving horizontal scrolling and playback behavior.
+Files touched: agents_log, index.html, src/renderer.mjs
+Verification: node --check src/renderer.mjs passed; node --check src/app.mjs passed; node tests/scheduler.test.mjs passed 12 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=trace-height-20260413 returned HTTP 200.
+
+2026-04-13 22:48 PDT - Agent: Codex
+Action: edit
+Summary: Starting control simplification pass: force task lanes and autorun on, default horizon to 100, rename scenario section, and replace task preset buttons with an expanded task preset dropdown.
+Files touched: agents_log
+Verification: not run
+
+2026-04-13 22:52 PDT - Agent: Codex
+Action: test
+Summary: Verified control simplification pass. Task lanes and autorun are now always enabled, default simulation length is 100, task presets moved into expanded task rows, and Add traces/expands the new task.
+Files touched: agents_log, README.md, index.html, src/app.mjs, src/model.mjs, src/renderer.mjs, styles.css
+Verification: node --check passed for src/app.mjs, src/model.mjs, and src/renderer.mjs; node tests/scheduler.test.mjs passed 12 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=simplified-controls-20260413 returned HTTP 200.
+
+2026-04-13 22:53 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the trace height and simplified controls/task preset dropdown changes to origin/main.
+Files touched: README.md, agents_log, index.html, src/app.mjs, src/model.mjs, src/renderer.mjs, styles.css
+Verification: pending final pre-commit checks

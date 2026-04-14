@@ -36,6 +36,7 @@ body {
 
 button,
 input,
+select,
 textarea {
   font: inherit;
 }
@@ -73,6 +74,7 @@ button:hover {
 }
 
 input,
+select,
 textarea {
   width: 100%;
   border: 1px solid var(--line);
@@ -81,9 +83,19 @@ textarea {
   background: #0d1116;
 }
 
-input {
+input,
+select {
   min-height: 34px;
   padding: 0 10px;
+}
+
+select {
+  appearance: none;
+  background:
+    linear-gradient(45deg, transparent 50%, var(--line-hot-strong) 50%) right 12px center / 7px 7px no-repeat,
+    linear-gradient(135deg, var(--line-hot-strong) 50%, transparent 50%) right 7px center / 7px 7px no-repeat,
+    #0d1116;
+  color: var(--text);
 }
 
 input[type="range"] {

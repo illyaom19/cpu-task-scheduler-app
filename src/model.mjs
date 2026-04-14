@@ -1,6 +1,6 @@
 export const P_STATES = [0, 0.25, 0.5, 0.75, 1];
 
-export const DEFAULT_SIMULATION_END = 60;
+export const DEFAULT_SIMULATION_END = 100;
 
 export const TASK_COLORS = [
   "#ff8a1f",

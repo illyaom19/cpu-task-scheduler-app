@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Look-Ahead EDF CPU Scheduler</title>
-    <link rel="stylesheet" href="styles.css?v=qte-playback-20260413">
+    <link rel="stylesheet" href="styles.css?v=simplified-controls-20260413">
   </head>
   <body>
     <main class="app-shell">
@@ -19,16 +19,6 @@
             <input id="simulation-end" type="number" min="1" step="1">
           </label>
           <button id="run-simulation" class="primary-action" type="button">Run</button>
-          <label class="switch-control">
-            <input id="auto-run" type="checkbox" checked>
-            <span></span>
-            Auto
-          </label>
-          <label class="switch-control">
-            <input id="show-task-lanes" type="checkbox">
-            <span></span>
-            Task lanes
-          </label>
         </div>
       </section>
 
@@ -44,13 +34,8 @@
       <section class="workspace" aria-label="Scheduler workspace">
         <aside class="control-panel">
           <div class="panel-section">
-            <h2>Scenarios</h2>
+            <h2>Premade Scenarios</h2>
             <div id="scenario-list" class="scenario-list"></div>
-          </div>
-
-          <div class="panel-section">
-            <h2>Task Presets</h2>
-            <div id="preset-list" class="chip-list"></div>
           </div>
 
           <div class="panel-section">
@@ -101,6 +86,6 @@
       </section>
     </main>
 
-    <script type="module" src="src/app.mjs?v=qte-playback-20260413"></script>
+    <script type="module" src="src/app.mjs?v=simplified-controls-20260413"></script>
   </body>
 </html>

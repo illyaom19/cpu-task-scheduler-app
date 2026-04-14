@@ -1,5 +1,5 @@
-import { DEFAULT_SIMULATION_END, calculateHyperperiod, createTask, normalizeTaskNames, validateSimulation } from "./model.mjs";
-import { PRESETS, SCENARIOS, scenarioTasks, taskFromPreset } from "./presets.mjs";
+import { DEFAULT_SIMULATION_END, createTask, normalizeTaskNames, validateSimulation } from "./model.mjs";
+import { PRESETS, SCENARIOS, scenarioTasks } from "./presets.mjs";
 import { renderInspector, renderTimeline } from "./renderer.mjs";
 import { runSimulation } from "./scheduler.mjs";
 
@@ -7,12 +7,10 @@ const initialTasks = scenarioTasks(SCENARIOS[0]);
 
 const state = {
   tasks: initialTasks,
-  simulationEnd: defaultSimulationEnd(initialTasks),
+  simulationEnd: defaultSimulationEnd(),
   result: null,
   selectedTaskId: null,
   selectedInterval: null,
-  autoRun: true,
-  showTaskLanes: false,
   stale: false,
   expandedTaskIds: new Set(),
   playbackTime: 0,
@@ -32,14 +30,12 @@ const PLAYBACK_EDGE_RATIO = 0.15;
 document.addEventListener("DOMContentLoaded", () => {
   bindElements();
   bindStaticEvents();
-  renderPresetButtons();
   renderScenarioButtons();
   rerun();
 });
 
 function bindElements() {
   elements.taskList = document.querySelector("#task-list");
-  elements.presetList = document.querySelector("#preset-list");
   elements.scenarioList = document.querySelector("#scenario-list");
   elements.simulationEnd = document.querySelector("#simulation-end");
   elements.summary = document.querySelector("#summary");
@@ -50,8 +46,6 @@ function bindElements() {
   elements.importBox = document.querySelector("#import-box");
   elements.runState = document.querySelector("#run-state");
   elements.runSimulation = document.querySelector("#run-simulation");
-  elements.autoRun = document.querySelector("#auto-run");
-  elements.showTaskLanes = document.querySelector("#show-task-lanes");
   elements.playbackToggle = document.querySelector("#playback-toggle");
   elements.playbackReset = document.querySelector("#playback-reset");
   elements.playbackReadout = document.querySelector("#playback-readout");
@@ -67,20 +61,6 @@ function bindStaticEvents() {
     rerun();
   });
 
-  elements.autoRun.addEventListener("change", (event) => {
-    state.autoRun = event.target.checked;
-    if (state.autoRun || !state.result) {
-      rerun();
-    } else {
-      renderRunState();
-    }
-  });
-
-  elements.showTaskLanes.addEventListener("change", (event) => {
-    state.showTaskLanes = event.target.checked;
-    renderTimeline(elements.timeline, state.result, timelineOptions());
-  });
-
   elements.playbackToggle.addEventListener("click", () => {
     togglePlayback();
   });
@@ -90,7 +70,9 @@ function bindStaticEvents() {
   });
 
   document.querySelector("#add-task").addEventListener("click", () => {
-    state.tasks = normalizeTaskNames([...state.tasks, createTask({ index: state.tasks.length })]);
+    const task = createTask({ index: state.tasks.length });
+    state.tasks = normalizeTaskNames([...state.tasks, task]);
+    traceTask(task.id);
     requestRun();
   });
 
@@ -127,22 +109,6 @@ function bindStaticEvents() {
   });
 }
 
-function renderPresetButtons() {
-  elements.presetList.textContent = "";
-
-  PRESETS.forEach((preset) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "chip-button";
-    button.textContent = preset.name;
-    button.addEventListener("click", () => {
-      state.tasks = normalizeTaskNames([...state.tasks, taskFromPreset(preset, state.tasks.length)]);
-      requestRun();
-    });
-    elements.presetList.append(button);
-  });
-}
-
 function renderScenarioButtons() {
   elements.scenarioList.textContent = "";
 
@@ -153,7 +119,7 @@ function renderScenarioButtons() {
     button.innerHTML = `<strong>${scenario.name}</strong><span>${scenario.description}</span>`;
     button.addEventListener("click", () => {
       state.tasks = scenarioTasks(scenario);
-      state.simulationEnd = defaultSimulationEnd(state.tasks, scenario.simulationEnd);
+      state.simulationEnd = defaultSimulationEnd();
       state.selectedTaskId = null;
       state.selectedInterval = null;
       state.expandedTaskIds.clear();
@@ -190,6 +156,12 @@ function renderTasks() {
       ${isExpanded ? `
         <div class="task-details">
           <label>
+            Use Premade Task
+            <select data-field="presetName">
+              ${presetOptions(task)}
+            </select>
+          </label>
+          <label>
             Phase
             <input type="number" data-field="releaseTime" min="0" step="0.1" value="${task.releaseTime}">
           </label>
@@ -222,6 +194,10 @@ function renderTasks() {
     `;
 
     row.addEventListener("input", (event) => {
+      if (event.target.tagName === "SELECT") {
+        return;
+      }
+
       const field = event.target.dataset.field;
       updateTaskFromInput(event, index, { shouldRun: !EXECUTION_FIELDS.has(field) });
     });
@@ -229,6 +205,9 @@ function renderTasks() {
       const field = event.target.dataset.field;
       if (EXECUTION_FIELDS.has(field)) {
         updateTaskFromInput(event, index, { shouldRun: true });
+      }
+      if (field === "presetName") {
+        updateTaskFromInput(event, index);
       }
     });
     row.addEventListener("click", (event) => handleTaskAction(event, index));
@@ -241,6 +220,12 @@ function updateTaskFromInput(event, index, options = {}) {
   const field = event.target.dataset.field;
 
   if (!field) {
+    return;
+  }
+
+  if (field === "presetName") {
+    applyTaskPreset(index, event.target.value);
+    requestRun();
     return;
   }
 
@@ -268,6 +253,54 @@ function updateTaskFromInput(event, index, options = {}) {
   }
 
   requestRun();
+}
+
+function presetOptions(task) {
+  const selected = task.presetName || "custom";
+  const customSelected = selected === "custom" ? " selected" : "";
+  const options = [`<option value="custom"${customSelected}>Custom</option>`];
+
+  PRESETS.forEach((preset) => {
+    const value = `preset:${preset.name}`;
+    const isSelected = selected === value ? " selected" : "";
+    options.push(`<option value="${escapeHtml(value)}"${isSelected}>${escapeHtml(preset.name)}</option>`);
+  });
+
+  return options.join("");
+}
+
+function applyTaskPreset(index, value) {
+  const current = state.tasks[index];
+
+  if (!current) {
+    return;
+  }
+
+  if (value === "custom") {
+    state.tasks = state.tasks.map((task, taskIndex) => taskIndex === index
+      ? { ...task, category: "custom", presetName: "custom" }
+      : task);
+    return;
+  }
+
+  const presetName = String(value).replace(/^preset:/, "");
+  const preset = PRESETS.find((item) => item.name === presetName);
+
+  if (!preset) {
+    return;
+  }
+
+  const updated = {
+    ...createTask({
+      ...preset,
+      id: current.id,
+      color: current.color,
+      index,
+    }),
+    presetName: value,
+  };
+
+  state.tasks = normalizeTaskNames(state.tasks.map((task, taskIndex) => taskIndex === index ? updated : task));
 }
 
 function handleTaskAction(event, index) {
@@ -353,8 +386,6 @@ function rerun() {
   resetPlaybackForTrace();
   state.stale = false;
   elements.simulationEnd.value = state.simulationEnd;
-  elements.autoRun.checked = state.autoRun;
-  elements.showTaskLanes.checked = state.showTaskLanes;
   state.result = runSimulation(state.tasks, state.simulationEnd);
   renderTasks();
   renderErrors();
@@ -377,31 +408,11 @@ function refreshTraceView() {
 }
 
 function requestRun() {
-  if (state.autoRun) {
-    rerun();
-    return;
-  }
-
-  resetPlaybackForTrace();
-  state.stale = true;
-  renderTasks();
-  renderErrors();
-  renderTimeline(elements.timeline, state.result, timelineOptions());
-  renderCurrentInspector();
-  renderRunState();
-  renderPlaybackControls();
+  rerun();
 }
 
 function renderRunState() {
-  if (state.stale) {
-    elements.runState.textContent = "Inputs changed. Press Run to refresh the trace.";
-    elements.runState.classList.add("stale");
-    return;
-  }
-
-  elements.runState.textContent = state.autoRun
-    ? "Auto mode armed. EDF priority, conservative look-ahead reservation, discrete P-states."
-    : "Manual mode armed. Press Run after edits to refresh the trace.";
+  elements.runState.textContent = "Live mode armed. EDF priority, conservative look-ahead reservation, discrete P-states.";
   elements.runState.classList.remove("stale");
 }
 
@@ -558,7 +569,7 @@ function renderCurrentInspector() {
 function timelineOptions() {
   return {
     selectedTaskId: state.selectedTaskId,
-    showTaskLanes: state.showTaskLanes,
+    showTaskLanes: true,
     playbackTime: state.playbackTime,
     playbackModeActive: state.playbackModeActive,
     playbackRunning: state.playbackRunning,
@@ -622,8 +633,8 @@ function metric(label, value, tone = "") {
   `;
 }
 
-function defaultSimulationEnd(tasks, fallback = DEFAULT_SIMULATION_END) {
-  return calculateHyperperiod(tasks) || fallback;
+function defaultSimulationEnd(fallback = DEFAULT_SIMULATION_END) {
+  return fallback;
 }
 
 function formatPlaybackTime(value) {
