@@ -497,3 +497,21 @@ Action: handoff
 Summary: Preparing to commit and push the empty-start default state update to origin/main.
 Files touched: agents_log, index.html, src/app.mjs
 Verification: pending final pre-commit checks.
+
+2026-04-13 23:44 PDT - Agent: Codex
+Action: edit
+Summary: Starting removal of the red missed-deadline summary blob above the trace while keeping miss count and playback/graph explanations.
+Files touched: agents_log
+Verification: not run
+
+2026-04-13 23:45 PDT - Agent: Codex
+Action: test
+Summary: Removed the red missed-deadline list from the summary area and deleted its CSS, leaving the miss metric plus graph/playback explanations.
+Files touched: agents_log, index.html, src/app.mjs, styles.css
+Verification: node --check passed for src/app.mjs, src/model.mjs, src/presets.mjs, and src/renderer.mjs; node tests/scheduler.test.mjs passed 15 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=no-miss-blob-20260413 returned HTTP 200.
+
+2026-04-13 23:46 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the missed-deadline summary blob removal to origin/main.
+Files touched: agents_log, index.html, src/app.mjs, styles.css
+Verification: pending final pre-commit checks.

@@ -468,21 +468,6 @@ function renderSummary() {
     ${metric("Deferred", metrics.deferredWork)}
     ${metric("Reclaimed", metrics.reclaimedSlack)}
   `;
-
-  if (result.misses.length > 0) {
-    const list = document.createElement("ol");
-    list.className = "miss-list";
-    result.misses.forEach((miss) => {
-      const item = document.createElement("li");
-      item.innerHTML = `
-        <strong>${escapeHtml(miss.taskName)} #${miss.instance}</strong>
-        <span>deadline t=${formatPlaybackTime(miss.missTime)}</span>
-        <span>${formatPlaybackTime(miss.remainingActual)} actual time remained, so the job could not finish before its deadline.</span>
-      `;
-      list.append(item);
-    });
-    elements.summary.append(list);
-  }
 }
 
 function togglePlayback() {

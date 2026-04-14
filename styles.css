@@ -650,35 +650,6 @@ h2 {
   color: var(--danger);
 }
 
-.miss-list {
-  grid-column: 1 / -1;
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding: 12px 12px 12px 34px;
-  border: 1px solid rgba(244, 63, 94, 0.5);
-  border-radius: 8px;
-  color: #ffd4dc;
-  background: rgba(244, 63, 94, 0.08);
-}
-
-.miss-list li {
-  padding-left: 4px;
-}
-
-.miss-list strong,
-.miss-list span {
-  display: block;
-}
-
-.miss-list strong {
-  color: #fff1f4;
-}
-
-.miss-list span {
-  color: #ffb6c2;
-}
-
 .timeline-shell {
   overflow-x: auto;
   overflow-y: hidden;
