@@ -259,11 +259,18 @@ h2 {
   text-transform: uppercase;
 }
 
-.algorithm-brief p {
+.algorithm-brief ul {
+  display: grid;
+  gap: 6px;
   max-width: 980px;
-  padding: 0 12px 10px;
+  margin: 0;
+  padding: 0 12px 10px 32px;
   color: var(--muted);
   line-height: 1.45;
+}
+
+.algorithm-brief strong {
+  color: var(--text);
 }
 
 .workspace {
@@ -319,6 +326,14 @@ h2 {
 .section-header p.stale {
   color: var(--line-hot-strong);
   text-shadow: 0 0 14px var(--glow);
+}
+
+.section-header p.good {
+  color: var(--good);
+}
+
+.section-header p.bad {
+  color: #ffd4dc;
 }
 
 .button-row,
@@ -584,12 +599,31 @@ h2 {
 
 .miss-list {
   grid-column: 1 / -1;
+  display: grid;
+  gap: 8px;
   margin: 0;
   padding: 12px 12px 12px 34px;
   border: 1px solid rgba(244, 63, 94, 0.5);
   border-radius: 8px;
   color: #ffd4dc;
   background: rgba(244, 63, 94, 0.08);
+}
+
+.miss-list li {
+  padding-left: 4px;
+}
+
+.miss-list strong,
+.miss-list span {
+  display: block;
+}
+
+.miss-list strong {
+  color: #fff1f4;
+}
+
+.miss-list span {
+  color: #ffb6c2;
 }
 
 .timeline-shell {
@@ -762,10 +796,27 @@ h2 {
   filter: drop-shadow(0 0 10px rgba(101, 113, 125, 0.28));
 }
 
+.qte-bubble.miss .qte-bubble-frame {
+  fill: rgba(35, 8, 14, 0.96);
+  stroke: var(--danger);
+  stroke-width: 1.8;
+  filter: drop-shadow(0 0 14px rgba(244, 63, 94, 0.56));
+}
+
 .qte-label {
   fill: var(--line-hot-strong);
   font-size: 10px;
   font-weight: 800;
+}
+
+.qte-bubble.miss .qte-label,
+.qte-miss-title {
+  fill: #ff8da1;
+}
+
+.qte-miss-title {
+  font-size: 13px;
+  font-weight: 900;
 }
 
 .qte-value {

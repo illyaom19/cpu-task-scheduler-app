@@ -377,3 +377,21 @@ Action: handoff
 Summary: Preparing to commit and push the trace height and simplified controls/task preset dropdown changes to origin/main.
 Files touched: README.md, agents_log, index.html, src/app.mjs, src/model.mjs, src/renderer.mjs, styles.css
 Verification: pending final pre-commit checks
+
+2026-04-13 22:59 PDT - Agent: Codex
+Action: edit
+Summary: Starting design review implementation for missed-deadline reasoning, persistent playback WHICH/WHEN/WHY guidance, clearer status copy, and a more teachable Algorithm Brief.
+Files touched: agents_log
+Verification: not run
+
+2026-04-13 23:03 PDT - Agent: Codex
+Action: test
+Summary: Implemented missed-deadline explanations in the summary, inspector, and playback bubble; replaced the live-mode blurb with schedulable/miss status; revised Algorithm Brief around WHICH, WHEN, WHY, and misses.
+Files touched: agents_log, index.html, src/app.mjs, src/renderer.mjs, styles.css
+Verification: node --check src/app.mjs passed; node --check src/renderer.mjs passed; node tests/scheduler.test.mjs passed 12 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=miss-reasoning-20260413 returned HTTP 200; Playwright smoke check not run because package is not installed.
+
+2026-04-13 23:04 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the missed-deadline reasoning and playback guidance changes to origin/main.
+Files touched: agents_log, index.html, src/app.mjs, src/renderer.mjs, styles.css
+Verification: pre-commit checks already passed; pending git commit and push.

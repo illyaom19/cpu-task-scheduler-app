@@ -20,12 +20,14 @@ const state = {
   playbackTimeAtStart: 0,
   playbackFrameId: null,
   playbackInterval: null,
+  playbackMiss: null,
 };
 
 const elements = {};
 const EXECUTION_FIELDS = new Set(["actualExecutionTime", "wcet"]);
 const PLAYBACK_MS_PER_TIME_UNIT = 450;
 const PLAYBACK_EDGE_RATIO = 0.15;
+const MISS_INSPECTOR_HOLD = 1.15;
 
 document.addEventListener("DOMContentLoaded", () => {
   bindElements();
@@ -412,8 +414,24 @@ function requestRun() {
 }
 
 function renderRunState() {
-  elements.runState.textContent = "Live mode armed. EDF priority, conservative look-ahead reservation, discrete P-states.";
-  elements.runState.classList.remove("stale");
+  const result = state.result;
+
+  elements.runState.classList.remove("stale", "bad", "good");
+
+  if (!result?.ok) {
+    elements.runState.textContent = "Fix task inputs to render a trace.";
+    elements.runState.classList.add("bad");
+    return;
+  }
+
+  if (result.metrics.totalMisses > 0) {
+    elements.runState.textContent = `${result.metrics.totalMisses} deadline miss${result.metrics.totalMisses === 1 ? "" : "es"}. Playback marks each miss with WHICH, WHEN, and WHY.`;
+    elements.runState.classList.add("bad");
+    return;
+  }
+
+  elements.runState.textContent = `Schedulable through t=${formatPlaybackTime(result.metrics.simulationEnd)}. EDF picks the earliest deadline; look-ahead protects future WCET.`;
+  elements.runState.classList.add("good");
 }
 
 function renderErrors() {
@@ -452,7 +470,11 @@ function renderSummary() {
     list.className = "miss-list";
     result.misses.forEach((miss) => {
       const item = document.createElement("li");
-      item.textContent = `${miss.taskName} #${miss.instance} missed at t=${miss.missTime} with ${miss.remainingActual} remaining.`;
+      item.innerHTML = `
+        <strong>${escapeHtml(miss.taskName)} #${miss.instance}</strong>
+        <span>deadline t=${formatPlaybackTime(miss.missTime)}</span>
+        <span>${formatPlaybackTime(miss.remainingActual)} actual time remained, so the job could not finish before its deadline.</span>
+      `;
       list.append(item);
     });
     elements.summary.append(list);
@@ -487,6 +509,7 @@ function startPlayback() {
   state.playbackStartedAt = performance.now();
   state.playbackTimeAtStart = state.playbackTime;
   state.playbackInterval = activeIntervalAt(state.playbackTime);
+  state.playbackMiss = activeMissAt(state.playbackTime);
   renderPlaybackFrame({ followPlayhead: true });
   state.playbackFrameId = requestAnimationFrame(tickPlayback);
 }
@@ -503,6 +526,7 @@ function resetPlayback() {
   state.playbackModeActive = true;
   state.playbackTime = 0;
   state.playbackInterval = activeIntervalAt(state.playbackTime);
+  state.playbackMiss = activeMissAt(state.playbackTime);
   renderPlaybackFrame({ followPlayhead: false });
 }
 
@@ -515,6 +539,7 @@ function tickPlayback(timestamp) {
   const simulationEnd = state.result.metrics.simulationEnd;
   state.playbackTime = Math.min(simulationEnd, state.playbackTimeAtStart + elapsed);
   state.playbackInterval = activeIntervalAt(state.playbackTime);
+  state.playbackMiss = activeMissAt(state.playbackTime);
   renderPlaybackFrame({ followPlayhead: true });
 
   if (state.playbackTime >= simulationEnd) {
@@ -545,6 +570,7 @@ function resetPlaybackForTrace() {
   state.playbackStartedAt = 0;
   state.playbackTimeAtStart = 0;
   state.playbackInterval = null;
+  state.playbackMiss = null;
 }
 
 function cancelPlaybackFrame() {
@@ -563,7 +589,7 @@ function renderPlaybackControls() {
 }
 
 function renderCurrentInspector() {
-  renderInspector(elements.inspector, state.playbackModeActive ? state.playbackInterval : state.selectedInterval);
+  renderInspector(elements.inspector, state.playbackModeActive ? state.playbackMiss || state.playbackInterval : state.selectedInterval);
 }
 
 function timelineOptions() {
@@ -589,6 +615,29 @@ function activeIntervalAt(time) {
       && interval.start <= point + 0.000001
       && interval.end > point
   )) || null;
+}
+
+function activeMissAt(time) {
+  if (!state.result?.ok) {
+    return null;
+  }
+
+  const simulationEnd = state.result.metrics.simulationEnd;
+  const point = Math.max(0, Math.min(time, simulationEnd));
+  const miss = state.result.misses.find((item) => (
+    item.missTime <= point + 0.000001
+      && point < Math.min(simulationEnd, item.missTime + MISS_INSPECTOR_HOLD)
+  ));
+
+  if (!miss) {
+    return null;
+  }
+
+  return {
+    ...miss,
+    event: "miss",
+    reason: "Actual execution was still remaining when this job reached its deadline.",
+  };
 }
 
 function followPlayheadNearEdge() {

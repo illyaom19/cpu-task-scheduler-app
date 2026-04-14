@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Look-Ahead EDF CPU Scheduler</title>
-    <link rel="stylesheet" href="styles.css?v=simplified-controls-20260413">
+    <link rel="stylesheet" href="styles.css?v=miss-reasoning-20260413">
   </head>
   <body>
     <main class="app-shell">
@@ -24,11 +24,12 @@
 
       <details class="algorithm-brief">
         <summary>Algorithm Brief</summary>
-        <p>
-          The scheduler expands periodic tasks into jobs, chooses ready work by earliest absolute deadline,
-          reserves future WCET demand conservatively, and drops to the lowest feasible P-state when slack
-          exists. When actual execution finishes early, unused WCET reservation becomes reclaimed slack.
-        </p>
+        <ul>
+          <li><strong>Which:</strong> ready jobs run by earliest absolute deadline.</li>
+          <li><strong>When:</strong> each periodic release becomes a job that can run until it completes or reaches its deadline.</li>
+          <li><strong>Why:</strong> look-ahead reserves WCET demand, then uses the lowest P-state that can still protect future deadlines.</li>
+          <li><strong>Misses:</strong> a job misses when actual execution remains at its deadline; playback calls out that moment in red.</li>
+        </ul>
       </details>
 
       <section class="workspace" aria-label="Scheduler workspace">
@@ -86,6 +87,6 @@
       </section>
     </main>
 
-    <script type="module" src="src/app.mjs?v=simplified-controls-20260413"></script>
+    <script type="module" src="src/app.mjs?v=miss-reasoning-20260413"></script>
   </body>
 </html>

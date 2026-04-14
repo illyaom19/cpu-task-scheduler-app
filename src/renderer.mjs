@@ -1,4 +1,5 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
+const MISS_BUBBLE_HOLD = 1.15;
 
 export function renderTimeline(target, result, options = {}) {
   const {
@@ -36,9 +37,11 @@ export function renderTimeline(target, result, options = {}) {
   const playheadX = timeScale(playheadTime);
   const revealTime = playbackModeActive ? playheadTime : result.metrics.simulationEnd;
   const activeInterval = playbackModeActive ? intervalAt(result.trace, playheadTime, result.metrics.simulationEnd) : null;
+  const activeMiss = playbackModeActive ? missAt(result.misses, playheadTime, result.metrics.simulationEnd) : null;
   const contentLayer = el("g", { class: "timeline-content" });
   const playbackCue = {
     interval: activeInterval,
+    miss: activeMiss,
     box: null,
     running: playbackRunning,
     time: playheadTime,
@@ -47,6 +50,7 @@ export function renderTimeline(target, result, options = {}) {
   };
 
   svg.dataset.playheadX = String(playheadX);
+  playbackCue.box = defaultPlaybackBox(playbackCue, timeScale, sharedTop, sharedHeight);
 
   drawHeader(svg, margin, timeScale, result.metrics.simulationEnd);
   drawCpuLane(svg, contentLayer, result, margin, sharedTop, sharedHeight, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue);
@@ -74,6 +78,17 @@ export function renderTimeline(target, result, options = {}) {
 export function renderInspector(target, interval) {
   if (!interval) {
     target.innerHTML = "<strong>Inspector</strong><span>Select a schedule interval for details.</span>";
+    return;
+  }
+
+  if (interval.event === "miss") {
+    target.innerHTML = `
+      <strong>MISS</strong>
+      <span>${escapeHtml(interval.taskName)} #${interval.instance}</span>
+      <span>deadline t=${format(interval.missTime)}</span>
+      <span>${format(interval.remainingActual)} actual time remained</span>
+      <span>${escapeHtml(interval.reason)}</span>
+    `;
     return;
   }
 
@@ -117,7 +132,7 @@ function drawCpuLane(svg, contentLayer, result, margin, y, laneHeight, timeScale
         label: interval.event === "execution" ? interval.taskName : "IDLE",
       });
 
-      if (interval === activeInterval) {
+      if (!playbackCue.miss && interval === activeInterval) {
         playbackCue.box = {
           x: timeScale(interval.start),
           y,
@@ -131,7 +146,7 @@ function drawCpuLane(svg, contentLayer, result, margin, y, laneHeight, timeScale
 }
 
 function drawTaskLanes(svg, contentLayer, result, tasks, margin, startY, laneHeight, laneGap, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue) {
-  appendText(svg, margin.left, startY - 16, "OPTIONAL TASK LANES", "axis-label");
+  appendText(svg, margin.left, startY - 16, "TASK LANES", "axis-label");
 
   tasks.forEach((task, index) => {
     const y = startY + index * (laneHeight + laneGap);
@@ -272,21 +287,19 @@ function drawPlayhead(svg, x, height, time) {
 }
 
 function drawPlaybackBubble(svg, cue) {
-  if (!cue.interval || !cue.box) {
+  if ((!cue.interval && !cue.miss) || !cue.box) {
     return;
   }
 
-  const bubbleWidth = 318;
-  const bubbleHeight = 76;
+  const bubbleWidth = cue.miss ? 380 : 342;
+  const bubbleHeight = cue.miss ? 98 : 84;
   const padding = 10;
-  const isIdle = cue.interval.event === "idle";
+  const isIdle = cue.interval?.event === "idle";
   const x = clamp(cue.box.x + Math.min(cue.box.width + 10, 56), 8, cue.width - bubbleWidth - 8);
   const preferredY = cue.box.y - bubbleHeight - 10;
   const y = preferredY >= 8 ? preferredY : Math.min(cue.height - bubbleHeight - 8, cue.box.y + cue.box.height + 12);
-  const group = el("g", { class: `qte-bubble ${isIdle ? "idle" : ""} ${cue.running ? "active" : ""}` });
-  const which = isIdle ? "IDLE" : `${cue.interval.taskName || "Task"} #${jobIndex(cue.interval.jobId)}`;
-  const when = `t=${format(cue.interval.start)} -> ${format(cue.interval.end)} (${format(cue.interval.end - cue.interval.start)})`;
-  const why = truncate(`P-state ${format(cue.interval.frequency)} | ${cue.interval.reason || "No reason recorded."}`, 58);
+  const group = el("g", { class: `qte-bubble ${isIdle ? "idle" : ""} ${cue.miss ? "miss" : ""} ${cue.running ? "active" : ""}` });
+  const lines = cue.miss ? missBubbleLines(cue.miss) : intervalBubbleLines(cue.interval);
 
   group.append(el("rect", {
     x,
@@ -297,14 +310,38 @@ function drawPlaybackBubble(svg, cue) {
     class: "qte-bubble-frame",
   }));
 
-  appendText(group, x + padding, y + 18, "WHICH", "qte-label");
-  appendText(group, x + 70, y + 18, truncate(which, 31), "qte-value");
-  appendText(group, x + padding, y + 40, "WHEN", "qte-label");
-  appendText(group, x + 70, y + 40, when, "qte-value");
-  appendText(group, x + padding, y + 62, "WHY", "qte-label");
-  appendText(group, x + 70, y + 62, why, "qte-value");
+  if (cue.miss) {
+    appendText(group, x + padding, y + 18, "MISS", "qte-miss-title");
+  }
+
+  lines.forEach((line, index) => {
+    const rowY = y + (cue.miss ? 40 : 20) + index * 22;
+    appendText(group, x + padding, rowY, line.label, "qte-label");
+    appendText(group, x + 72, rowY, line.value, "qte-value");
+  });
 
   svg.append(group);
+}
+
+function intervalBubbleLines(interval) {
+  const isIdle = interval.event === "idle";
+  const which = isIdle ? "IDLE" : `${interval.taskName || "Task"} #${jobIndex(interval.jobId)}`;
+  const when = `t=${format(interval.start)} -> ${format(interval.end)} (${format(interval.end - interval.start)})`;
+  const why = truncate(`P-state ${format(interval.frequency)} | ${interval.reason || "No reason recorded."}`, 64);
+
+  return [
+    { label: "WHICH", value: truncate(which, 34) },
+    { label: "WHEN", value: when },
+    { label: "WHY", value: why },
+  ];
+}
+
+function missBubbleLines(miss) {
+  return [
+    { label: "WHICH", value: truncate(`${miss.taskName} #${miss.instance}`, 38) },
+    { label: "WHEN", value: `deadline t=${format(miss.missTime)}` },
+    { label: "WHY", value: truncate(`${format(miss.remainingActual)} actual time remained at the deadline.`, 58) },
+  ];
 }
 
 function drawAxis(svg, margin, y, width, simulationEnd, timeScale) {
@@ -414,6 +451,39 @@ function intervalAt(trace, time, simulationEnd) {
       && interval.start <= point + 0.000001
       && interval.end > point
   )) || null;
+}
+
+function missAt(misses, time, simulationEnd) {
+  const point = Math.max(0, Math.min(time, simulationEnd));
+
+  return misses.find((miss) => (
+    miss.missTime <= point + 0.000001
+      && point < Math.min(simulationEnd, miss.missTime + MISS_BUBBLE_HOLD)
+  )) || null;
+}
+
+function defaultPlaybackBox(cue, timeScale, cpuTop, cpuHeight) {
+  if (cue.miss) {
+    return {
+      x: timeScale(cue.miss.missTime),
+      y: cpuTop,
+      width: 36,
+      height: cpuHeight,
+    };
+  }
+
+  if (cue.interval) {
+    const x = timeScale(cue.interval.start);
+
+    return {
+      x,
+      y: cpuTop,
+      width: Math.max(36, timeScale(cue.interval.end) - x),
+      height: cpuHeight,
+    };
+  }
+
+  return null;
 }
 
 function clamp(value, min, max) {
