@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { calculateHyperperiod, createTask, generateJobs, normalizeTaskNames, validateSimulation } from "../src/model.mjs";
+import { SCENARIOS, scenarioTasks } from "../src/presets.mjs";
 import { requiredDensity, runSimulation, selectPState } from "../src/scheduler.mjs";
 
 const tests = [];
@@ -10,6 +11,54 @@ test("generates periodic jobs through the simulation horizon", () => {
 
   assert.deepEqual(jobs.map((job) => job.releaseTime), [1, 6, 11]);
   assert.deepEqual(jobs.map((job) => job.absoluteDeadline), [5, 10, 15]);
+});
+
+test("uses per-instance actual execution times when provided", () => {
+  const task = createTask({
+    id: "lecture-t1",
+    name: "T1",
+    releaseTime: 0,
+    wcet: 3,
+    actualExecutionTime: 2,
+    actualExecutionTimes: [2, 1],
+    period: 8,
+    deadline: 8,
+  });
+  const jobs = generateJobs([task], 16);
+
+  assert.deepEqual(jobs.map((job) => job.actualExecutionTime), [2, 1, 2]);
+});
+
+test("limits generated jobs when max instances is provided", () => {
+  const task = createTask({
+    id: "lecture-t2",
+    name: "T2",
+    releaseTime: 0,
+    wcet: 3,
+    actualExecutionTime: 1,
+    actualExecutionTimes: [1, 1],
+    maxInstances: 2,
+    period: 10,
+    deadline: 10,
+  });
+  const jobs = generateJobs([task], 30);
+
+  assert.deepEqual(jobs.map((job) => job.releaseTime), [0, 10]);
+});
+
+test("includes the lecture EDF example from the PDF", () => {
+  const scenario = SCENARIOS.find((item) => item.id === "lecture-edf-example");
+  const jobs = generateJobs(scenarioTasks(scenario), scenario.simulationEnd);
+
+  assert.equal(scenario.name, "Lecture EDF Example");
+  assert.deepEqual(jobs.map((job) => `${job.taskName}:${job.instance}:${job.actualExecutionTime}`), [
+    "T1:0:2",
+    "T2:0:1",
+    "T3:0:1",
+    "T1:1:1",
+    "T2:1:1",
+    "T3:1:1",
+  ]);
 });
 
 test("normalizes duplicate task names", () => {

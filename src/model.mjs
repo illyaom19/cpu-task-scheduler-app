@@ -23,6 +23,12 @@ export function createTask(overrides = {}) {
     releaseTime: numberOr(overrides.releaseTime, 0),
     wcet,
     actualExecutionTime: numberOr(overrides.actualExecutionTime, Math.max(0.25, wcet * 0.75)),
+    actualExecutionTimes: Array.isArray(overrides.actualExecutionTimes)
+      ? overrides.actualExecutionTimes.map((value) => numberOr(value, wcet))
+      : null,
+    maxInstances: overrides.maxInstances != null && Number.isFinite(Number(overrides.maxInstances))
+      ? Math.max(1, Math.floor(Number(overrides.maxInstances)))
+      : null,
     period: numberOr(overrides.period, 10),
     deadline: numberOr(overrides.deadline, numberOr(overrides.period, 10)),
     color: overrides.color || TASK_COLORS[index % TASK_COLORS.length],
@@ -69,6 +75,20 @@ export function validateSimulation(tasks, simulationEnd) {
     if (Number(task.actualExecutionTime) > Number(task.wcet)) {
       errors.push(`${prefix}: actual execution time cannot exceed WCET.`);
     }
+
+    if (Array.isArray(task.actualExecutionTimes)) {
+      task.actualExecutionTimes.forEach((actual, index) => {
+        assertPositive(errors, prefix, `actual execution time ${index + 1}`, actual);
+
+        if (Number(actual) > Number(task.wcet)) {
+          errors.push(`${prefix}: actual execution time ${index + 1} cannot exceed WCET.`);
+        }
+      });
+    }
+
+    if (task.maxInstances != null && (!Number.isFinite(Number(task.maxInstances)) || Number(task.maxInstances) <= 0)) {
+      errors.push(`${prefix}: max instances must be greater than 0.`);
+    }
   });
 
   return errors;
@@ -82,9 +102,15 @@ export function generateJobs(tasks, simulationEnd) {
     let releaseTime = Number(task.releaseTime);
     let instance = 0;
 
-    while (releaseTime <= simulationEnd + Number.EPSILON) {
+    const maxInstances = task.maxInstances != null && Number.isFinite(Number(task.maxInstances))
+      ? Math.floor(Number(task.maxInstances))
+      : Infinity;
+
+    while (releaseTime <= simulationEnd + Number.EPSILON && instance < maxInstances) {
       const wcet = Number(task.wcet);
-      const actualExecutionTime = Number(task.actualExecutionTime);
+      const actualExecutionTime = Array.isArray(task.actualExecutionTimes) && task.actualExecutionTimes[instance] != null
+        ? Number(task.actualExecutionTimes[instance])
+        : Number(task.actualExecutionTime);
 
       jobs.push({
         jobId: `${task.id}-job-${instance}`,

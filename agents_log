@@ -461,3 +461,21 @@ Action: handoff
 Summary: Preparing to commit and push the inline simulation end control and trace label readability updates to origin/main.
 Files touched: agents_log, index.html, src/app.mjs, src/renderer.mjs, styles.css
 Verification: pending final pre-commit checks.
+
+2026-04-13 23:35 PDT - Agent: Codex
+Action: edit
+Summary: Starting implementation of the PDF class example as a premade scenario with per-job actual execution support and limited releases.
+Files touched: agents_log
+Verification: not run
+
+2026-04-13 23:38 PDT - Agent: Codex
+Action: test
+Summary: Added the lecture EDF example as a premade scenario, merged in the PDF from origin/main, and added optional per-job actual execution plus max-instance support.
+Files touched: agents_log, Lecture10_LookAhead_EDF_only.pdf, index.html, src/app.mjs, src/model.mjs, src/presets.mjs, tests/scheduler.test.mjs
+Verification: node --check passed for src/model.mjs, src/presets.mjs, src/app.mjs, and src/renderer.mjs; node tests/scheduler.test.mjs passed 15 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=lecture-scenario-20260413 returned HTTP 200.
+
+2026-04-13 23:39 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the lecture PDF premade scenario and per-job actual execution support to origin/main.
+Files touched: agents_log, index.html, src/app.mjs, src/model.mjs, src/presets.mjs, tests/scheduler.test.mjs
+Verification: pending final pre-commit checks.

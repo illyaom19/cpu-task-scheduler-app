@@ -248,6 +248,11 @@ function updateTaskFromInput(event, index, options = {}) {
     updated.actualExecutionTime = updated.wcet;
   }
 
+  if (field === "actualExecutionTime") {
+    updated.actualExecutionTimes = null;
+    updated.maxInstances = null;
+  }
+
   state.tasks = normalizeTaskNames(state.tasks.map((task, taskIndex) => taskIndex === index ? updated : task));
 
   if (!shouldRun && EXECUTION_FIELDS.has(field)) {

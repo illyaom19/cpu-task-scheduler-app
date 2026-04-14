@@ -14,6 +14,17 @@ export const PRESETS = [
 
 export const SCENARIOS = [
   {
+    id: "lecture-edf-example",
+    name: "Lecture EDF Example",
+    simulationEnd: 16,
+    description: "Class example with two releases per task and per-job actual execution.",
+    tasks: [
+      { name: "T1", category: "lecture", releaseTime: 0, wcet: 3, actualExecutionTime: 2, actualExecutionTimes: [2, 1], maxInstances: 2, period: 8, deadline: 8 },
+      { name: "T2", category: "lecture", releaseTime: 0, wcet: 3, actualExecutionTime: 1, actualExecutionTimes: [1, 1], maxInstances: 2, period: 10, deadline: 10 },
+      { name: "T3", category: "lecture", releaseTime: 0, wcet: 1, actualExecutionTime: 1, actualExecutionTimes: [1, 1], maxInstances: 2, period: 14, deadline: 14 },
+    ],
+  },
+  {
     id: "balanced-ecu",
     name: "Balanced ECU",
     simulationEnd: 60,
