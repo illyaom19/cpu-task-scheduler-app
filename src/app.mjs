@@ -47,6 +47,8 @@ function bindElements() {
   elements.runState = document.querySelector("#run-state");
   elements.playbackToggle = document.querySelector("#playback-toggle");
   elements.playbackReset = document.querySelector("#playback-reset");
+  elements.playbackPrev = document.querySelector("#playback-prev");
+  elements.playbackNext = document.querySelector("#playback-next");
   elements.playbackSlider = document.querySelector("#playback-slider");
   elements.playbackReadout = document.querySelector("#playback-readout");
   elements.playbackCurrent = document.querySelector("#playback-current");
@@ -64,6 +66,14 @@ function bindStaticEvents() {
 
   elements.playbackReset.addEventListener("click", () => {
     resetPlayback();
+  });
+
+  elements.playbackPrev.addEventListener("click", () => {
+    stepPlaybackSwitch(-1);
+  });
+
+  elements.playbackNext.addEventListener("click", () => {
+    stepPlaybackSwitch(1);
   });
 
   elements.playbackSlider.addEventListener("input", (event) => {
@@ -533,6 +543,24 @@ function seekPlayback(time) {
   renderPlaybackFrame({ followPlayhead: true });
 }
 
+function stepPlaybackSwitch(direction) {
+  if (!state.result?.ok) {
+    return;
+  }
+
+  const switchTimes = taskSwitchTimes();
+  if (switchTimes.length === 0) {
+    return;
+  }
+
+  const current = state.playbackTime;
+  const target = direction < 0
+    ? [...switchTimes].reverse().find((time) => time < current - 0.000001) ?? 0
+    : switchTimes.find((time) => time > current + 0.000001) ?? state.result.metrics.simulationEnd;
+
+  seekPlayback(target);
+}
+
 function tickPlayback(timestamp) {
   if (!state.playbackRunning || !state.result?.ok) {
     return;
@@ -586,12 +614,27 @@ function cancelPlaybackFrame() {
 function renderPlaybackControls() {
   const simulationEnd = state.result?.metrics?.simulationEnd || state.simulationEnd || 0;
   elements.playbackToggle.textContent = state.playbackRunning ? "Pause" : "Play";
+  elements.playbackToggle.setAttribute("aria-label", state.playbackRunning ? "Pause" : "Play");
   elements.playbackReset.disabled = !state.result?.ok;
   elements.playbackToggle.disabled = !state.result?.ok;
+  elements.playbackPrev.disabled = !state.result?.ok;
+  elements.playbackNext.disabled = !state.result?.ok;
   elements.playbackSlider.disabled = !state.result?.ok;
   elements.playbackSlider.max = String(simulationEnd);
   elements.playbackSlider.value = String(Math.min(state.playbackTime, simulationEnd));
   elements.playbackCurrent.textContent = formatPlaybackTime(state.playbackTime);
+}
+
+function taskSwitchTimes() {
+  if (!state.result?.ok) {
+    return [];
+  }
+
+  return [...new Set(state.result.trace
+    .filter((interval) => (interval.event === "execution" || interval.event === "idle") && interval.end > interval.start)
+    .flatMap((interval) => [interval.start, interval.end])
+    .filter((time) => time >= 0 && time <= state.result.metrics.simulationEnd)
+    .map((time) => Number(time.toFixed(3))))].sort((a, b) => a - b);
 }
 
 function renderCurrentInspector() {

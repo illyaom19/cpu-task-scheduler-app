@@ -533,3 +533,21 @@ Action: handoff
 Summary: Preparing to commit and push the expanding WHICH/WHEN/WHY playback bubble update to origin/main.
 Files touched: agents_log, index.html, src/renderer.mjs
 Verification: pending final pre-commit checks.
+
+2026-04-13 23:51 PDT - Agent: Codex
+Action: edit
+Summary: Starting playback control cleanup: icon-only play/reset controls and previous/next task-switch stepping buttons.
+Files touched: agents_log
+Verification: not run
+
+2026-04-13 23:52 PDT - Agent: Codex
+Action: test
+Summary: Reordered playback controls with reset on the left, icon-only reset/play controls, and previous/next buttons that pause and seek to adjacent task switch times.
+Files touched: agents_log, index.html, src/app.mjs, styles.css
+Verification: node --check passed for src/app.mjs, src/renderer.mjs, src/model.mjs, and src/presets.mjs; node tests/scheduler.test.mjs passed 15 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=icon-playback-20260413 returned HTTP 200.
+
+2026-04-13 23:52 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the icon playback controls and switch-step seeking update to origin/main.
+Files touched: agents_log, index.html, src/app.mjs, styles.css
+Verification: pending final pre-commit checks.

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Look-Ahead EDF CPU Scheduler</title>
-    <link rel="stylesheet" href="styles.css?v=expanding-qte-20260413">
+    <link rel="stylesheet" href="styles.css?v=icon-playback-20260413">
   </head>
   <body>
     <main class="app-shell">
@@ -51,8 +51,10 @@
             <p id="run-state">EDF priority, conservative look-ahead reservation, discrete P-states.</p>
           </div>
           <div class="playback-bar" aria-label="Trace playback controls">
-            <button id="playback-toggle" type="button">Play</button>
             <button id="playback-reset" type="button">Reset</button>
+            <button id="playback-prev" type="button" aria-label="Previous task switch">Previous</button>
+            <button id="playback-toggle" type="button" aria-label="Play">Play</button>
+            <button id="playback-next" type="button" aria-label="Next task switch">Next</button>
             <label class="playback-scrubber">
               Timeline
               <input id="playback-slider" type="range" min="0" max="0" step="0.1" value="0">
@@ -87,6 +89,6 @@
       </section>
     </main>
 
-    <script type="module" src="src/app.mjs?v=expanding-qte-20260413"></script>
+    <script type="module" src="src/app.mjs?v=icon-playback-20260413"></script>
   </body>
 </html>

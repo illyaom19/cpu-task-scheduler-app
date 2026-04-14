@@ -345,7 +345,7 @@ h2 {
 
 .playback-bar {
   display: grid;
-  grid-template-columns: auto auto minmax(160px, 1fr) auto;
+  grid-template-columns: repeat(4, auto) minmax(160px, 1fr) auto;
   align-items: center;
   gap: 8px;
   padding: 8px;
@@ -355,10 +355,32 @@ h2 {
 }
 
 .playback-bar button {
-  min-width: 72px;
+  min-width: 34px;
   min-height: 30px;
   padding: 0 10px;
+  font-size: 0;
   text-transform: uppercase;
+}
+
+.playback-bar button::before {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+#playback-reset::before {
+  content: "\21bb";
+}
+
+#playback-prev::before {
+  content: "\2190";
+}
+
+#playback-toggle::before {
+  content: "\25b6";
+}
+
+#playback-next::before {
+  content: "\2192";
 }
 
 .playback-readout {
