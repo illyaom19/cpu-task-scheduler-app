@@ -640,3 +640,20 @@ Action: handoff
 Summary: Preparing to commit and push the educational mode implementation to origin/main.
 Files touched: agents_log
 Verification: git status and git diff --stat reviewed before staging.
+2026-04-14 11:36 PDT - Agent: Codex
+Action: edit
+Summary: Starting trace readability cleanup: keep task release/deadline markers visible during playback, constrain Available Tasks cards, and split task metadata onto separate lines.
+Files touched: agents_log, src/renderer.mjs, styles.css
+Verification: not run
+
+2026-04-14 11:37 PDT - Agent: Codex
+Action: test
+Summary: Completed trace readability cleanup. Task release/deadline markers now remain visible throughout playback, Available Tasks cards cap at their default compact width, and task lane metadata renders Execution, Period, and Deadline on separate lines.
+Files touched: agents_log, index.html, src/renderer.mjs, styles.css
+Verification: node --check src/renderer.mjs passed; node --check src/app.mjs passed; node tests/scheduler.test.mjs passed 17 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=trace-marker-readability-20260414 returned HTTP 200.
+
+2026-04-14 11:38 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the trace marker and readability changes to origin/main.
+Files touched: agents_log
+Verification: git status and git diff --stat reviewed before staging.

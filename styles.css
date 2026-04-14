@@ -700,13 +700,16 @@ h2 {
 }
 
 .education-bucket {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 148px), 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
   gap: 8px;
 }
 
 .education-job,
 .education-idle {
+  flex: 0 1 148px;
+  max-width: 148px;
   min-height: 58px;
   padding: 8px;
   border: 1px solid rgba(151, 161, 173, 0.22);
@@ -734,6 +737,10 @@ h2 {
 .education-idle {
   color: var(--muted);
   font-size: 0.74rem;
+}
+
+.education-idle {
+  max-width: 260px;
 }
 
 .metric {
@@ -828,7 +835,7 @@ h2 {
 
 .lane-meta-label {
   fill: #97a1ad;
-  font-size: 10px;
+  font-size: 9.5px;
 }
 
 .selected-label,

@@ -89,8 +89,8 @@ function traceLayout(taskLaneCount) {
   const roomy = taskLaneCount <= 6;
   const sharedTop = 56;
   const sharedHeight = 54;
-  const laneHeight = roomy ? 50 : 46;
-  const laneGap = dense ? 8 : 12;
+  const laneHeight = roomy ? 76 : 70;
+  const laneGap = dense ? 10 : 14;
   const laneStart = sharedTop + sharedHeight + 52;
 
   return {
@@ -182,8 +182,12 @@ function drawTaskLanes(svg, contentLayer, result, tasks, margin, startY, laneHei
 
   tasks.forEach((task, index) => {
     const y = startY + index * (laneHeight + laneGap);
-    appendText(svg, 20, y + 19, truncate(task.name, 24), selectedTaskId === task.id ? "lane-label selected-label" : "lane-label");
-    appendText(svg, 20, y + 36, taskBlurb(task), selectedTaskId === task.id ? "lane-meta-label selected-label" : "lane-meta-label");
+    const labelClass = selectedTaskId === task.id ? "lane-label selected-label" : "lane-label";
+    const metaClass = selectedTaskId === task.id ? "lane-meta-label selected-label" : "lane-meta-label";
+    appendText(svg, 20, y + 18, truncate(task.name, 24), labelClass);
+    taskBlurbLines(task).forEach((line, lineIndex) => {
+      appendText(svg, 20, y + 36 + lineIndex * 13, line, metaClass);
+    });
     appendLine(svg, margin.left, y + laneHeight + 6, timeScale(visibleEnd), y + laneHeight + 6, "lane-grid");
 
     result.trace
@@ -287,12 +291,16 @@ function labelFits(label, width) {
   return width >= String(label).length * 7 + 16;
 }
 
-function taskBlurb(task) {
+function taskBlurbLines(task) {
   const execution = Array.isArray(task.actualExecutionTimes)
     ? `${format(task.actualExecutionTimes[0])}/${format(task.wcet)}`
     : `${format(task.actualExecutionTime)}/${format(task.wcet)}`;
 
-  return `Execution: ${execution} Period: ${format(task.period)} Deadline: ${format(task.deadline)}`;
+  return [
+    `Execution: ${execution}`,
+    `Period: ${format(task.period)}`,
+    `Deadline: ${format(task.deadline)}`,
+  ];
 }
 
 function drawJobMarkers(parent, jobs, misses, y, laneHeight, timeScale, simulationEnd, revealTime = simulationEnd) {
@@ -301,13 +309,9 @@ function drawJobMarkers(parent, jobs, misses, y, laneHeight, timeScale, simulati
     const deadlineTime = Math.min(job.absoluteDeadline, simulationEnd);
     const deadlineX = timeScale(deadlineTime);
 
-    if (job.releaseTime <= revealTime) {
-      appendLine(parent, releaseX, y - 8, releaseX, y + laneHeight + 8, "release-marker");
-    }
+    appendLine(parent, releaseX, y - 8, releaseX, y + laneHeight + 8, "release-marker");
 
-    if (deadlineTime <= revealTime) {
-      appendLine(parent, deadlineX, y - 10, deadlineX, y + laneHeight + 10, job.missed ? "deadline-marker missed" : "deadline-marker");
-    }
+    appendLine(parent, deadlineX, y - 10, deadlineX, y + laneHeight + 10, job.missed ? "deadline-marker missed" : "deadline-marker");
 
     if (job.completedAt != null && job.completedAt <= simulationEnd) {
       if (job.completedAt <= revealTime) {
