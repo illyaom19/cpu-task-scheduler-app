@@ -6,6 +6,7 @@ export function renderTimeline(target, result, options = {}) {
     showTaskLanes = false,
     playbackTime = 0,
     playbackModeActive = false,
+    playbackRunning = false,
   } = options;
   target.textContent = "";
 
@@ -36,14 +37,22 @@ export function renderTimeline(target, result, options = {}) {
   const revealTime = playbackModeActive ? playheadTime : result.metrics.simulationEnd;
   const activeInterval = playbackModeActive ? intervalAt(result.trace, playheadTime, result.metrics.simulationEnd) : null;
   const contentLayer = el("g", { class: "timeline-content" });
+  const playbackCue = {
+    interval: activeInterval,
+    box: null,
+    running: playbackRunning,
+    time: playheadTime,
+    width,
+    height,
+  };
 
   svg.dataset.playheadX = String(playheadX);
 
   drawHeader(svg, margin, timeScale, result.metrics.simulationEnd);
-  drawCpuLane(svg, contentLayer, result, margin, sharedTop, sharedHeight, timeScale, selectedTaskId, activeInterval, revealTime);
+  drawCpuLane(svg, contentLayer, result, margin, sharedTop, sharedHeight, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue);
 
   if (showTaskLanes) {
-    drawTaskLanes(svg, contentLayer, result, enabledTasks, margin, laneStart, laneHeight, laneGap, timeScale, selectedTaskId, activeInterval, revealTime);
+    drawTaskLanes(svg, contentLayer, result, enabledTasks, margin, laneStart, laneHeight, laneGap, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue);
   } else {
     appendText(svg, margin.left, laneStart, "TASK LANES OFF", "axis-label muted-label");
   }
@@ -53,6 +62,7 @@ export function renderTimeline(target, result, options = {}) {
   svg.append(contentLayer);
 
   if (playbackModeActive) {
+    drawPlaybackBubble(svg, playbackCue);
     drawPlayhead(svg, playheadX, height, playheadTime);
   }
 
@@ -81,7 +91,7 @@ function drawHeader(svg, margin, timeScale, simulationEnd) {
   appendLine(svg, margin.left, 30, timeScale(simulationEnd), 30, "glow-line");
 }
 
-function drawCpuLane(svg, contentLayer, result, margin, y, laneHeight, timeScale, selectedTaskId, activeInterval, revealTime) {
+function drawCpuLane(svg, contentLayer, result, margin, y, laneHeight, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue) {
   appendText(svg, 20, y + 22, "CPU", "lane-label");
   appendLine(svg, margin.left, y + laneHeight + 6, timeScale(result.metrics.simulationEnd), y + laneHeight + 6, "track-line");
 
@@ -103,14 +113,24 @@ function drawCpuLane(svg, contentLayer, result, margin, y, laneHeight, timeScale
         height: laneHeight,
         selectedTaskId,
         active: interval === activeInterval,
+        entering: playbackCue.running && end - interval.start < 0.35,
         label: interval.event === "execution" ? interval.taskName : "IDLE",
       });
+
+      if (interval === activeInterval) {
+        playbackCue.box = {
+          x: timeScale(interval.start),
+          y,
+          width: Math.max(3, timeScale(end) - timeScale(interval.start)),
+          height: laneHeight,
+        };
+      }
     });
 
   drawJobMarkers(contentLayer, result.jobs, result.misses, y, laneHeight, timeScale, result.metrics.simulationEnd, revealTime);
 }
 
-function drawTaskLanes(svg, contentLayer, result, tasks, margin, startY, laneHeight, laneGap, timeScale, selectedTaskId, activeInterval, revealTime) {
+function drawTaskLanes(svg, contentLayer, result, tasks, margin, startY, laneHeight, laneGap, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue) {
   appendText(svg, margin.left, startY - 12, "OPTIONAL TASK LANES", "axis-label");
 
   tasks.forEach((task, index) => {
@@ -136,6 +156,7 @@ function drawTaskLanes(svg, contentLayer, result, tasks, margin, startY, laneHei
           height: laneHeight,
           selectedTaskId,
           active: interval === activeInterval,
+          entering: playbackCue.running && end - interval.start < 0.35,
           label: interval.end - interval.start > 1.4 ? `#${jobIndex(interval.jobId)}` : "",
         });
       });
@@ -162,7 +183,7 @@ function drawInterval(svg, interval, box) {
     width: box.width,
     height: box.height,
     rx: 4,
-    class: `${isIdle ? "interval idle" : `interval execution ${interval.deferred ? "deferred" : ""}`} ${box.active ? "playing" : ""}`,
+    class: `${isIdle ? "interval idle" : `interval execution ${interval.deferred ? "deferred" : ""}`} ${box.active ? "playing" : ""} ${box.entering ? "entering" : ""}`,
     fill: isIdle ? "#131a20" : interval.taskColor,
     opacity: isDimmed ? "0.22" : "1",
     "data-interval": JSON.stringify(interval),
@@ -248,6 +269,42 @@ function drawFrequency(svg, contentLayer, result, margin, top, height, timeScale
 function drawPlayhead(svg, x, height, time) {
   appendLine(svg, x, 6, x, height - 30, "playhead-line");
   appendText(svg, x + 6, 18, `t=${format(time)}`, "playhead-label");
+}
+
+function drawPlaybackBubble(svg, cue) {
+  if (!cue.interval || !cue.box) {
+    return;
+  }
+
+  const bubbleWidth = 318;
+  const bubbleHeight = 76;
+  const padding = 10;
+  const isIdle = cue.interval.event === "idle";
+  const x = clamp(cue.box.x + Math.min(cue.box.width + 10, 56), 8, cue.width - bubbleWidth - 8);
+  const preferredY = cue.box.y - bubbleHeight - 10;
+  const y = preferredY >= 8 ? preferredY : Math.min(cue.height - bubbleHeight - 8, cue.box.y + cue.box.height + 12);
+  const group = el("g", { class: `qte-bubble ${isIdle ? "idle" : ""} ${cue.running ? "active" : ""}` });
+  const which = isIdle ? "IDLE" : `${cue.interval.taskName || "Task"} #${jobIndex(cue.interval.jobId)}`;
+  const when = `t=${format(cue.interval.start)} -> ${format(cue.interval.end)} (${format(cue.interval.end - cue.interval.start)})`;
+  const why = truncate(`P-state ${format(cue.interval.frequency)} | ${cue.interval.reason || "No reason recorded."}`, 58);
+
+  group.append(el("rect", {
+    x,
+    y,
+    width: bubbleWidth,
+    height: bubbleHeight,
+    rx: 6,
+    class: "qte-bubble-frame",
+  }));
+
+  appendText(group, x + padding, y + 18, "WHICH", "qte-label");
+  appendText(group, x + 70, y + 18, truncate(which, 31), "qte-value");
+  appendText(group, x + padding, y + 40, "WHEN", "qte-label");
+  appendText(group, x + 70, y + 40, when, "qte-value");
+  appendText(group, x + padding, y + 62, "WHY", "qte-label");
+  appendText(group, x + 70, y + 62, why, "qte-value");
+
+  svg.append(group);
 }
 
 function drawAxis(svg, margin, y, width, simulationEnd, timeScale) {
@@ -337,6 +394,16 @@ function tooltip(interval) {
 
 function jobIndex(jobId) {
   return String(jobId || "").split("-job-")[1] || "";
+}
+
+function truncate(value, maxLength) {
+  const text = String(value || "");
+
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  return `${text.slice(0, Math.max(0, maxLength - 3))}...`;
 }
 
 function intervalAt(trace, time, simulationEnd) {

@@ -686,7 +686,12 @@ h2 {
 .interval.playing {
   stroke: var(--line-hot-strong);
   stroke-width: 2;
+  animation: interval-pulse 0.8s steps(2, end) infinite;
   filter: drop-shadow(0 0 10px rgba(255, 176, 0, 0.78));
+}
+
+.interval.entering {
+  animation: interval-enter 0.28s ease-out;
 }
 
 .interval.execution {
@@ -723,6 +728,83 @@ h2 {
   fill: var(--line-hot-strong);
   font-size: 12px;
   font-weight: 800;
+}
+
+.qte-bubble {
+  pointer-events: none;
+}
+
+.qte-bubble.active {
+  animation: qte-pop 0.22s ease-out;
+}
+
+.qte-bubble-frame {
+  fill: rgba(8, 12, 16, 0.94);
+  stroke: var(--line-hot-strong);
+  stroke-width: 1.4;
+  filter: drop-shadow(0 0 12px rgba(255, 138, 31, 0.42));
+}
+
+.qte-bubble.idle .qte-bubble-frame {
+  stroke: #65717d;
+  filter: drop-shadow(0 0 10px rgba(101, 113, 125, 0.28));
+}
+
+.qte-label {
+  fill: var(--line-hot-strong);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.qte-value {
+  fill: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+@keyframes interval-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 10px rgba(255, 176, 0, 0.78));
+  }
+
+  50% {
+    opacity: 0.78;
+    filter: drop-shadow(0 0 16px rgba(255, 176, 0, 0.95));
+  }
+}
+
+@keyframes interval-enter {
+  from {
+    opacity: 0;
+    filter: drop-shadow(0 0 0 rgba(255, 176, 0, 0));
+  }
+
+  to {
+    opacity: 1;
+    filter: drop-shadow(0 0 10px rgba(255, 176, 0, 0.72));
+  }
+}
+
+@keyframes qte-pop {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interval.playing,
+  .interval.entering,
+  .qte-bubble.active {
+    animation: none;
+  }
 }
 
 .inspector {

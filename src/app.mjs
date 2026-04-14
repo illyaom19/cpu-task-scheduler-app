@@ -26,7 +26,7 @@ const state = {
 
 const elements = {};
 const EXECUTION_FIELDS = new Set(["actualExecutionTime", "wcet"]);
-const PLAYBACK_MS_PER_TIME_UNIT = 100;
+const PLAYBACK_MS_PER_TIME_UNIT = 450;
 const PLAYBACK_EDGE_RATIO = 0.15;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -561,6 +561,7 @@ function timelineOptions() {
     showTaskLanes: state.showTaskLanes,
     playbackTime: state.playbackTime,
     playbackModeActive: state.playbackModeActive,
+    playbackRunning: state.playbackRunning,
   };
 }
 
