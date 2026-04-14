@@ -551,3 +551,21 @@ Action: handoff
 Summary: Preparing to commit and push the icon playback controls and switch-step seeking update to origin/main.
 Files touched: agents_log, index.html, src/app.mjs, styles.css
 Verification: pending final pre-commit checks.
+
+2026-04-13 23:58 PDT - Agent: Codex
+Action: edit
+Summary: Starting header copy cleanup to replace the terminal eyebrow text and remove the large title.
+Files touched: agents_log
+Verification: not run
+
+2026-04-13 23:59 PDT - Agent: Codex
+Action: test
+Summary: Replaced the header eyebrow with LOOK-AHEAD_CONSERVING_EDF_TERMINAL, removed the large title, strengthened the remaining label styling, and restarted the local static server.
+Files touched: agents_log, index.html, styles.css
+Verification: node --check passed for src/app.mjs, src/renderer.mjs, src/model.mjs, and src/presets.mjs; node tests/scheduler.test.mjs passed 15 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=terminal-title-20260413 returned HTTP 200.
+
+2026-04-14 00:00 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the terminal header title cleanup to origin/main.
+Files touched: agents_log, index.html, styles.css
+Verification: pending final pre-commit checks.

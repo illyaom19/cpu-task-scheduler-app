@@ -169,8 +169,9 @@ h2 {
 }
 
 .eyebrow {
-  margin-bottom: 6px;
   color: var(--line-hot);
+  font-size: 1rem;
+  font-weight: 800;
   text-transform: uppercase;
   text-shadow: 0 0 16px var(--glow);
 }
