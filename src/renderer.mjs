@@ -2,7 +2,7 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 const MISS_BUBBLE_HOLD = 1.15;
 const MIN_VISIBLE_TIMELINE = 50;
 const MAX_VISIBLE_TIMELINE = 50;
-const LABEL_GUTTER = 168;
+const LABEL_GUTTER = 212;
 
 export function renderTimeline(target, result, options = {}) {
   const {
@@ -85,7 +85,7 @@ function traceLayout(taskLaneCount) {
   const roomy = taskLaneCount <= 6;
   const sharedTop = 56;
   const sharedHeight = 54;
-  const laneHeight = roomy ? 42 : 38;
+  const laneHeight = roomy ? 50 : 46;
   const laneGap = dense ? 8 : 12;
   const laneStart = sharedTop + sharedHeight + 52;
 
@@ -169,7 +169,6 @@ function drawCpuLane(svg, contentLayer, result, margin, y, laneHeight, timeScale
       }
     });
 
-  drawJobMarkers(contentLayer, result.jobs, result.misses, y, laneHeight, timeScale, result.metrics.simulationEnd, revealTime);
 }
 
 function drawTaskLanes(svg, contentLayer, result, tasks, margin, startY, laneHeight, laneGap, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue, visibleEnd) {
@@ -177,7 +176,8 @@ function drawTaskLanes(svg, contentLayer, result, tasks, margin, startY, laneHei
 
   tasks.forEach((task, index) => {
     const y = startY + index * (laneHeight + laneGap);
-    appendText(svg, 20, y + Math.min(28, laneHeight - 10), truncate(task.name, 20), selectedTaskId === task.id ? "lane-label selected-label" : "lane-label");
+    appendText(svg, 20, y + 19, truncate(task.name, 24), selectedTaskId === task.id ? "lane-label selected-label" : "lane-label");
+    appendText(svg, 20, y + 36, taskBlurb(task), selectedTaskId === task.id ? "lane-meta-label selected-label" : "lane-meta-label");
     appendLine(svg, margin.left, y + laneHeight + 6, timeScale(visibleEnd), y + laneHeight + 6, "lane-grid");
 
     result.trace
@@ -241,6 +241,14 @@ function drawInterval(svg, interval, box) {
 
 function labelFits(label, width) {
   return width >= String(label).length * 7 + 16;
+}
+
+function taskBlurb(task) {
+  const execution = Array.isArray(task.actualExecutionTimes)
+    ? `${format(task.actualExecutionTimes[0])}/${format(task.wcet)}`
+    : `${format(task.actualExecutionTime)}/${format(task.wcet)}`;
+
+  return `Execution: ${execution} Period: ${format(task.period)} Deadline: ${format(task.deadline)}`;
 }
 
 function drawJobMarkers(parent, jobs, misses, y, laneHeight, timeScale, simulationEnd, revealTime = simulationEnd) {

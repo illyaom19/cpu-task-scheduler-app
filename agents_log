@@ -605,3 +605,21 @@ Action: handoff
 Summary: Preparing to commit and push the responsive trace-width update to origin/main.
 Files touched: agents_log, index.html, src/renderer.mjs
 Verification: pending final pre-commit checks.
+
+2026-04-14 11:15 PDT - Agent: Codex
+Action: edit
+Summary: Starting task-lane readability update: remove CPU bus deadline markers and add per-task execution/period/deadline blurbs.
+Files touched: agents_log
+Verification: not run
+
+2026-04-14 11:16 PDT - Agent: Codex
+Action: test
+Summary: Removed job/deadline markers from the CPU execution bus and added compact execution, period, and deadline metadata under each task lane name.
+Files touched: agents_log, index.html, src/renderer.mjs, styles.css
+Verification: node --check passed for src/renderer.mjs, src/app.mjs, src/model.mjs, and src/presets.mjs; node tests/scheduler.test.mjs passed 15 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=task-lane-metadata-20260414 returned HTTP 200.
+
+2026-04-14 11:17 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the task-lane marker and metadata update to origin/main.
+Files touched: agents_log, index.html, src/renderer.mjs, styles.css
+Verification: pending final pre-commit checks.

@@ -725,7 +725,8 @@ h2 {
 .tick-label,
 .legend-label,
 .block-label,
-.lane-label {
+.lane-label,
+.lane-meta-label {
   fill: var(--muted);
   font-size: 12px;
 }
@@ -733,6 +734,11 @@ h2 {
 .lane-label {
   fill: #d6dde6;
   font-weight: 700;
+}
+
+.lane-meta-label {
+  fill: #97a1ad;
+  font-size: 10px;
 }
 
 .selected-label,
