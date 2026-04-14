@@ -14,6 +14,7 @@ const state = {
   autoRun: true,
   showTaskLanes: true,
   stale: false,
+  expandedTaskIds: new Set(),
 };
 
 const elements = {};
@@ -97,13 +98,13 @@ function bindStaticEvents() {
     }
 
     const interval = JSON.parse(intervalNode.dataset.interval);
-    state.selectedInterval = interval;
+      state.selectedInterval = interval;
 
     if (interval.taskId) {
-      state.selectedTaskId = interval.taskId;
+      traceTask(interval.taskId);
       refreshTraceView();
     } else {
-      state.selectedTaskId = null;
+      untraceTask(interval.taskId);
       refreshTraceView();
     }
   });
@@ -138,6 +139,7 @@ function renderScenarioButtons() {
       state.simulationEnd = defaultSimulationEnd(state.tasks, scenario.simulationEnd);
       state.selectedTaskId = null;
       state.selectedInterval = null;
+      state.expandedTaskIds.clear();
       requestRun();
     });
     elements.scenarioList.append(button);
@@ -156,44 +158,50 @@ function renderTasks() {
   }
 
   state.tasks.forEach((task, index) => {
+    const isExpanded = state.expandedTaskIds.has(task.id) || state.selectedTaskId === task.id;
     const row = document.createElement("article");
-    row.className = `task-row ${state.selectedTaskId === task.id ? "selected" : ""}`;
+    row.className = `task-row ${isExpanded ? "expanded" : "collapsed"} ${state.selectedTaskId === task.id ? "selected" : ""}`;
     row.innerHTML = `
-      <label class="task-enabled">
-        <input type="checkbox" data-field="enabled" ${task.enabled ? "checked" : ""}>
-        <span></span>
-      </label>
-      <input class="task-name" data-field="name" value="${escapeHtml(task.name)}" aria-label="Task name">
-      <label>
-        Phase
-        <input type="number" data-field="releaseTime" min="0" step="0.1" value="${task.releaseTime}">
-      </label>
-      <label class="execution-control">
-        Execution
-        <div class="dual-range" style="--actual:${toPercent(task.actualExecutionTime)}%; --wcet:${toPercent(task.wcet)}%;">
-          <span class="duration-rail"></span>
-          <input class="actual-range" type="range" data-field="actualExecutionTime" min="0.1" max="12" step="0.1" value="${task.actualExecutionTime}" aria-label="${escapeHtml(task.name)} actual execution time">
-          <input class="wcet-range" type="range" data-field="wcet" min="0.1" max="12" step="0.1" value="${task.wcet}" aria-label="${escapeHtml(task.name)} worst case execution time">
-        </div>
-        <output><span class="actual-value">Actual ${task.actualExecutionTime}</span><span class="wcet-value">WCET ${task.wcet}</span></output>
-      </label>
-      <label>
-        Period
-        <input type="number" data-field="period" min="0.1" step="0.1" value="${task.period}">
-      </label>
-      <label>
-        Deadline
-        <input type="number" data-field="deadline" min="0.1" step="0.1" value="${task.deadline}">
-      </label>
-      <label>
-        Color
-        <input type="color" data-field="color" value="${task.color}">
-      </label>
-      <div class="row-actions">
-        <button type="button" data-action="select">Trace</button>
-        <button type="button" data-action="duplicate">Duplicate</button>
-        <button type="button" data-action="delete">Delete</button>
+      <div class="task-summary" style="--task-color:${task.color};">
+        <button class="task-enable-button ${task.enabled ? "enabled" : "disabled"}" type="button" data-action="toggle-enabled" aria-label="${task.enabled ? "Disable" : "Enable"} ${escapeHtml(task.name)}">${task.enabled ? "Disable" : "Enable"}</button>
+        ${isExpanded
+          ? `<input class="task-name" data-field="name" value="${escapeHtml(task.name)}" aria-label="Task name">`
+          : `<span class="task-name-display">${escapeHtml(task.name)}</span>`
+        }
+        <button class="task-delete-button" type="button" data-action="delete" aria-label="Delete ${escapeHtml(task.name)}">Delete</button>
       </div>
+      ${isExpanded ? `
+        <div class="task-details">
+          <label>
+            Phase
+            <input type="number" data-field="releaseTime" min="0" step="0.1" value="${task.releaseTime}">
+          </label>
+          <label class="execution-control">
+            Execution
+            <div class="dual-range" style="--actual:${toPercent(task.actualExecutionTime)}%; --wcet:${toPercent(task.wcet)}%;">
+              <span class="duration-rail"></span>
+              <input class="actual-range" type="range" data-field="actualExecutionTime" min="0.1" max="12" step="0.1" value="${task.actualExecutionTime}" aria-label="${escapeHtml(task.name)} actual execution time">
+              <input class="wcet-range" type="range" data-field="wcet" min="0.1" max="12" step="0.1" value="${task.wcet}" aria-label="${escapeHtml(task.name)} worst case execution time">
+            </div>
+            <output><span class="actual-value">Actual ${task.actualExecutionTime}</span><span class="wcet-value">WCET ${task.wcet}</span></output>
+          </label>
+          <label>
+            Period
+            <input type="number" data-field="period" min="0.1" step="0.1" value="${task.period}">
+          </label>
+          <label>
+            Deadline
+            <input type="number" data-field="deadline" min="0.1" step="0.1" value="${task.deadline}">
+          </label>
+          <label>
+            Color
+            <input type="color" data-field="color" value="${task.color}">
+          </label>
+          <div class="row-actions">
+            <button type="button" data-action="duplicate">Duplicate</button>
+          </div>
+        </div>
+      ` : ""}
     `;
 
     row.addEventListener("input", (event) => {
@@ -246,14 +254,32 @@ function updateTaskFromInput(event, index, options = {}) {
 }
 
 function handleTaskAction(event, index) {
-  const action = event.target.dataset.action;
+  const actionTarget = event.target.closest("[data-action]");
+  const taskId = state.tasks[index]?.id;
+
+  if (event.target.closest("input, textarea, select") && !event.target.dataset.action) {
+    return;
+  }
+
+  const action = actionTarget?.dataset.action;
 
   if (!action) {
+    if (event.target.closest(".task-details")) {
+      return;
+    }
+
+    toggleTaskTrace(taskId);
+    refreshTraceView();
     return;
   }
 
   if (action === "delete") {
+    untraceTask(taskId);
     state.tasks = state.tasks.filter((_, taskIndex) => taskIndex !== index);
+  }
+
+  if (action === "toggle-enabled") {
+    state.tasks = state.tasks.map((task, taskIndex) => taskIndex === index ? { ...task, enabled: !task.enabled } : task);
   }
 
   if (action === "duplicate") {
@@ -266,12 +292,44 @@ function handleTaskAction(event, index) {
     state.tasks = normalizeTaskNames([...state.tasks, duplicate]);
   }
 
-  if (action === "select") {
-    state.selectedTaskId = state.selectedTaskId === state.tasks[index].id ? null : state.tasks[index].id;
-    state.selectedInterval = null;
+  requestRun();
+}
+
+function traceTask(taskId) {
+  if (!taskId) {
+    return;
   }
 
-  requestRun();
+  state.selectedTaskId = taskId;
+  state.expandedTaskIds.clear();
+  state.expandedTaskIds.add(taskId);
+}
+
+function untraceTask(taskId = state.selectedTaskId) {
+  if (taskId) {
+    state.expandedTaskIds.delete(taskId);
+  } else {
+    state.expandedTaskIds.clear();
+  }
+
+  if (!taskId || state.selectedTaskId === taskId) {
+    state.selectedTaskId = null;
+    state.selectedInterval = null;
+  }
+}
+
+function toggleTaskTrace(taskId) {
+  if (!taskId) {
+    return;
+  }
+
+  if (state.selectedTaskId === taskId && state.expandedTaskIds.has(taskId)) {
+    untraceTask(taskId);
+    return;
+  }
+
+  state.selectedInterval = null;
+  traceTask(taskId);
 }
 
 function rerun() {
@@ -292,8 +350,7 @@ function rerun() {
 }
 
 function clearTrace() {
-  state.selectedTaskId = null;
-  state.selectedInterval = null;
+  untraceTask();
   refreshTraceView();
 }
 

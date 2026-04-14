@@ -232,6 +232,48 @@ Summary: Committed and pushed the cache-busting slider asset fix to origin/main.
 Files touched: agents_log
 Verification: git commit created e9aa908 Bust cached slider assets; git push origin main updated origin/main from 2d81421 to e9aa908.
 
+2026-04-13 21:31 PDT - Agent: Codex
+Action: investigation
+Summary: Investigated collapsible task row request. Current task rows always render the full editor, with name editable by default and enable represented as a checkbox.
+Files touched: agents_log
+Verification: Read AGENTS.md, src/app.mjs, task-row styles, git status, and current timestamp.
+
+2026-04-13 21:33 PDT - Agent: Codex
+Action: edit
+Summary: Made side-bar task rows collapsible by default. Collapsed rows show only a task-coloured Enable/Disable button, the task name, and a small Delete button; expanded rows reveal editable name and full task controls. Tracing a task from the graph expands that task.
+Files touched: agents_log, index.html, src/app.mjs, styles.css
+Verification: pending
+
+2026-04-13 21:33 PDT - Agent: Codex
+Action: test
+Summary: Verified the collapsible task row implementation and existing scheduler behavior.
+Files touched: none
+Verification: node --check passed for src/app.mjs, src/model.mjs, and src/renderer.mjs; node tests/scheduler.test.mjs passed 12 tests; curl -I http://127.0.0.1:8000/?v=task-collapse-20260413 returned HTTP 200.
+
+2026-04-13 21:37 PDT - Agent: Codex
+Action: investigation
+Summary: Investigated follow-up task collapse behavior request. Current expanded task rows still include an explicit Collapse button and expansion state is not strictly tied to trace state.
+Files touched: agents_log
+Verification: Read AGENTS.md, current task row app code, task row CSS, git status, and current timestamp.
+
+2026-04-13 21:38 PDT - Agent: Codex
+Action: edit
+Summary: Removed the explicit Collapse button and tied task expansion directly to trace state. Tapping a task summary background now expands and traces that task; tapping it again collapses and untraces it. Graph tracing still expands/traces the task.
+Files touched: agents_log, index.html, src/app.mjs, styles.css
+Verification: pending
+
+2026-04-13 21:38 PDT - Agent: Codex
+Action: test
+Summary: Verified the revised task trace/collapse interaction and existing scheduler behavior.
+Files touched: none
+Verification: node --check passed for src/app.mjs, src/model.mjs, and src/renderer.mjs; node tests/scheduler.test.mjs passed 12 tests; curl -I http://127.0.0.1:8000/?v=task-trace-collapse-20260413 returned HTTP 200.
+
+2026-04-13 21:39 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the task trace/collapse interaction changes to origin/main.
+Files touched: agents_log, index.html, src/app.mjs, styles.css
+Verification: node --check passed for src/app.mjs, src/model.mjs, and src/renderer.mjs; node tests/scheduler.test.mjs passed 12 tests.
+
 2026-04-13 21:15 PDT - Agent: Codex
 Action: handoff
 Summary: Preparing to commit and push the Actual/WCET slider optimization and local server log updates to origin/main.
