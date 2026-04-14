@@ -479,3 +479,21 @@ Action: handoff
 Summary: Preparing to commit and push the lecture PDF premade scenario and per-job actual execution support to origin/main.
 Files touched: agents_log, index.html, src/app.mjs, src/model.mjs, src/presets.mjs, tests/scheduler.test.mjs
 Verification: pending final pre-commit checks.
+
+2026-04-13 23:40 PDT - Agent: Codex
+Action: edit
+Summary: Starting update to make the app open with no preloaded tasks while leaving premade scenarios available for explicit selection.
+Files touched: agents_log
+Verification: not run
+
+2026-04-13 23:40 PDT - Agent: Codex
+Action: test
+Summary: Changed initial app state to an empty task list and cache-busted the app assets for the empty-start behavior.
+Files touched: agents_log, index.html, src/app.mjs
+Verification: node --check passed for src/app.mjs, src/model.mjs, src/presets.mjs, and src/renderer.mjs; node tests/scheduler.test.mjs passed 15 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=empty-start-20260413 returned HTTP 200.
+
+2026-04-13 23:41 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the empty-start default state update to origin/main.
+Files touched: agents_log, index.html, src/app.mjs
+Verification: pending final pre-commit checks.

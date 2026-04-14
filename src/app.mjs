@@ -3,10 +3,8 @@ import { PRESETS, SCENARIOS, scenarioTasks } from "./presets.mjs";
 import { renderInspector, renderTimeline } from "./renderer.mjs";
 import { runSimulation } from "./scheduler.mjs";
 
-const initialTasks = scenarioTasks(SCENARIOS[0]);
-
 const state = {
-  tasks: initialTasks,
+  tasks: [],
   simulationEnd: defaultSimulationEnd(),
   result: null,
   selectedTaskId: null,
