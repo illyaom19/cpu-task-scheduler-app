@@ -404,8 +404,8 @@ h2 {
   height: 8px;
   border-radius: 4px;
   background:
-    linear-gradient(90deg, rgba(255, 138, 31, 0.24), rgba(244, 63, 94, 0.12)),
-    linear-gradient(90deg, var(--line-hot) var(--actual), transparent var(--actual)),
+    linear-gradient(90deg, rgba(54, 211, 153, 0.24), rgba(244, 63, 94, 0.12)),
+    linear-gradient(90deg, var(--good) var(--actual), transparent var(--actual)),
     #0a0e13;
   box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.68), 0 0 14px rgba(255, 138, 31, 0.18);
 }
@@ -423,11 +423,31 @@ h2 {
 }
 
 .actual-range::-webkit-slider-thumb {
-  background: var(--line-hot-strong);
+  background: var(--good);
+  box-shadow: 0 0 12px rgba(54, 211, 153, 0.72);
 }
 
 .wcet-range::-webkit-slider-thumb {
   background: var(--danger);
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.72);
+}
+
+.actual-range::-moz-range-thumb {
+  background: var(--good);
+  box-shadow: 0 0 12px rgba(54, 211, 153, 0.72);
+}
+
+.wcet-range::-moz-range-thumb {
+  background: var(--danger);
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.72);
+}
+
+.actual-value {
+  color: var(--good);
+}
+
+.wcet-value {
+  color: var(--danger);
 }
 
 .row-actions {

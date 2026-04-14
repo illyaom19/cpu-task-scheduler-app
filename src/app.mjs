@@ -17,6 +17,7 @@ const state = {
 };
 
 const elements = {};
+const EXECUTION_FIELDS = new Set(["actualExecutionTime", "wcet"]);
 
 document.addEventListener("DOMContentLoaded", () => {
   bindElements();
@@ -174,7 +175,7 @@ function renderTasks() {
           <input class="actual-range" type="range" data-field="actualExecutionTime" min="0.1" max="12" step="0.1" value="${task.actualExecutionTime}" aria-label="${escapeHtml(task.name)} actual execution time">
           <input class="wcet-range" type="range" data-field="wcet" min="0.1" max="12" step="0.1" value="${task.wcet}" aria-label="${escapeHtml(task.name)} worst case execution time">
         </div>
-        <output><span>Actual ${task.actualExecutionTime}</span><span>WCET ${task.wcet}</span></output>
+        <output><span class="actual-value">Actual ${task.actualExecutionTime}</span><span class="wcet-value">WCET ${task.wcet}</span></output>
       </label>
       <label>
         Period
@@ -195,13 +196,23 @@ function renderTasks() {
       </div>
     `;
 
-    row.addEventListener("input", (event) => updateTaskFromInput(event, index));
+    row.addEventListener("input", (event) => {
+      const field = event.target.dataset.field;
+      updateTaskFromInput(event, index, { shouldRun: !EXECUTION_FIELDS.has(field) });
+    });
+    row.addEventListener("change", (event) => {
+      const field = event.target.dataset.field;
+      if (EXECUTION_FIELDS.has(field)) {
+        updateTaskFromInput(event, index, { shouldRun: true });
+      }
+    });
     row.addEventListener("click", (event) => handleTaskAction(event, index));
     elements.taskList.append(row);
   });
 }
 
-function updateTaskFromInput(event, index) {
+function updateTaskFromInput(event, index, options = {}) {
+  const { shouldRun = true } = options;
   const field = event.target.dataset.field;
 
   if (!field) {
@@ -225,6 +236,12 @@ function updateTaskFromInput(event, index) {
   }
 
   state.tasks = normalizeTaskNames(state.tasks.map((task, taskIndex) => taskIndex === index ? updated : task));
+
+  if (!shouldRun && EXECUTION_FIELDS.has(field)) {
+    syncExecutionControl(event.target.closest(".task-row"), state.tasks[index]);
+    return;
+  }
+
   requestRun();
 }
 
@@ -388,6 +405,36 @@ function toPercent(value) {
   const min = 0.1;
   const max = 12;
   return Math.max(0, Math.min(100, ((Number(value) - min) / (max - min)) * 100));
+}
+
+function syncExecutionControl(row, task) {
+  if (!row) {
+    return;
+  }
+
+  row.querySelector(".dual-range")?.style.setProperty("--actual", `${toPercent(task.actualExecutionTime)}%`);
+  row.querySelector(".dual-range")?.style.setProperty("--wcet", `${toPercent(task.wcet)}%`);
+
+  const actualInput = row.querySelector('[data-field="actualExecutionTime"]');
+  const wcetInput = row.querySelector('[data-field="wcet"]');
+  const actualValue = row.querySelector(".actual-value");
+  const wcetValue = row.querySelector(".wcet-value");
+
+  if (actualInput) {
+    actualInput.value = task.actualExecutionTime;
+  }
+
+  if (wcetInput) {
+    wcetInput.value = task.wcet;
+  }
+
+  if (actualValue) {
+    actualValue.textContent = `Actual ${task.actualExecutionTime}`;
+  }
+
+  if (wcetValue) {
+    wcetValue.textContent = `WCET ${task.wcet}`;
+  }
 }
 
 function escapeHtml(value) {
