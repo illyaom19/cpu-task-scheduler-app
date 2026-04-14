@@ -280,6 +280,7 @@ function updateTaskFromInput(event, index, options = {}) {
 
   if (!shouldRun && EXECUTION_FIELDS.has(field)) {
     syncExecutionControl(event.target.closest(".task-row"), state.tasks[index]);
+    refreshSimulationOutputs();
     return;
   }
 
@@ -419,6 +420,20 @@ function rerun() {
   elements.simulationEnd.value = state.simulationEnd;
   state.result = runSimulation(state.tasks, state.simulationEnd);
   renderTasks();
+  renderErrors();
+  renderSummary();
+  renderEducationalPanel();
+  renderTimeline(elements.timeline, state.result, timelineOptions());
+  renderCurrentInspector();
+  renderRunState();
+  renderPlaybackControls();
+}
+
+function refreshSimulationOutputs() {
+  resetPlaybackForTrace();
+  state.stale = false;
+  elements.simulationEnd.value = state.simulationEnd;
+  state.result = runSimulation(state.tasks, state.simulationEnd);
   renderErrors();
   renderSummary();
   renderEducationalPanel();

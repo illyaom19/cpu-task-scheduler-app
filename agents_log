@@ -674,3 +674,20 @@ Action: handoff
 Summary: Preparing to commit and push the dynamic trace viewport sizing fix to origin/main.
 Files touched: agents_log
 Verification: git status and git diff --stat reviewed before staging.
+2026-04-14 12:03 PDT - Agent: Codex
+Action: edit
+Summary: Starting live marker refresh fix. Current Period/Deadline/Phase inputs rerun immediately, while Actual/WCET slider input only syncs the control; adding timeline-only preview refresh so graph markers update live without rebuilding the task editor on each slider tick.
+Files touched: agents_log, src/app.mjs, index.html
+Verification: not run
+
+2026-04-14 12:04 PDT - Agent: Codex
+Action: test
+Summary: Completed live marker refresh fix. Deferred Actual/WCET slider input now refreshes simulation outputs and timeline markers immediately while avoiding task-card DOM rebuilds until the control change commits.
+Files touched: agents_log, index.html, src/app.mjs
+Verification: node --check src/app.mjs passed; node --check src/renderer.mjs passed; node tests/scheduler.test.mjs passed 17 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=live-marker-refresh-20260414 returned HTTP 200.
+
+2026-04-14 12:05 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the live timeline marker refresh fix to origin/main.
+Files touched: agents_log
+Verification: git status and git diff --stat reviewed before staging.
