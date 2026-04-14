@@ -515,3 +515,21 @@ Action: handoff
 Summary: Preparing to commit and push the missed-deadline summary blob removal to origin/main.
 Files touched: agents_log, index.html, src/app.mjs, styles.css
 Verification: pending final pre-commit checks.
+
+2026-04-13 23:48 PDT - Agent: Codex
+Action: edit
+Summary: Starting update so the WHICH/WHEN/WHY playback bubble wraps text and expands vertically instead of truncating explanations.
+Files touched: agents_log
+Verification: not run
+
+2026-04-13 23:49 PDT - Agent: Codex
+Action: test
+Summary: Made the playback WHICH/WHEN/WHY bubble wrap its content and compute height from the rendered lines, removing fixed-height truncation.
+Files touched: agents_log, index.html, src/renderer.mjs
+Verification: node --check passed for src/renderer.mjs, src/app.mjs, src/model.mjs, and src/presets.mjs; node tests/scheduler.test.mjs passed 15 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=expanding-qte-20260413 returned HTTP 200.
+
+2026-04-13 23:49 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the expanding WHICH/WHEN/WHY playback bubble update to origin/main.
+Files touched: agents_log, index.html, src/renderer.mjs
+Verification: pending final pre-commit checks.

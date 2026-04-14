@@ -318,14 +318,21 @@ function drawPlaybackBubble(svg, cue) {
   }
 
   const bubbleWidth = cue.miss ? 380 : 342;
-  const bubbleHeight = cue.miss ? 98 : 84;
   const padding = 10;
+  const labelColumnWidth = 62;
+  const lineHeight = 14;
+  const rowGap = 8;
+  const titleHeight = cue.miss ? 22 : 0;
+  const textWidth = bubbleWidth - padding * 2 - labelColumnWidth;
   const isIdle = cue.interval?.event === "idle";
+  const lines = (cue.miss ? missBubbleLines(cue.miss) : intervalBubbleLines(cue.interval))
+    .map((line) => ({ ...line, valueLines: wrapText(line.value, textWidth) }));
+  const contentHeight = lines.reduce((total, line) => total + Math.max(lineHeight, line.valueLines.length * lineHeight) + rowGap, 0) - rowGap;
+  const bubbleHeight = padding * 2 + titleHeight + contentHeight;
   const x = clamp(cue.box.x + Math.min(cue.box.width + 10, 56), 8, cue.width - bubbleWidth - 8);
   const preferredY = cue.box.y - bubbleHeight - 10;
   const y = preferredY >= 8 ? preferredY : Math.min(cue.height - bubbleHeight - 8, cue.box.y + cue.box.height + 12);
   const group = el("g", { class: `qte-bubble ${isIdle ? "idle" : ""} ${cue.miss ? "miss" : ""} ${cue.running ? "active" : ""}` });
-  const lines = cue.miss ? missBubbleLines(cue.miss) : intervalBubbleLines(cue.interval);
 
   group.append(el("rect", {
     x,
@@ -340,10 +347,13 @@ function drawPlaybackBubble(svg, cue) {
     appendText(group, x + padding, y + 18, "MISS", "qte-miss-title");
   }
 
+  let rowY = y + padding + titleHeight + 10;
   lines.forEach((line, index) => {
-    const rowY = y + (cue.miss ? 40 : 20) + index * 22;
     appendText(group, x + padding, rowY, line.label, "qte-label");
-    appendText(group, x + 72, rowY, line.value, "qte-value");
+    line.valueLines.forEach((valueLine, lineIndex) => {
+      appendText(group, x + padding + labelColumnWidth, rowY + lineIndex * lineHeight, valueLine, "qte-value");
+    });
+    rowY += Math.max(lineHeight, line.valueLines.length * lineHeight) + rowGap;
   });
 
   svg.append(group);
@@ -353,10 +363,10 @@ function intervalBubbleLines(interval) {
   const isIdle = interval.event === "idle";
   const which = isIdle ? "IDLE" : `${interval.taskName || "Task"} #${jobIndex(interval.jobId)}`;
   const when = `t=${format(interval.start)} -> ${format(interval.end)} (${format(interval.end - interval.start)})`;
-  const why = truncate(`P-state ${format(interval.frequency)} | ${interval.reason || "No reason recorded."}`, 64);
+  const why = `P-state ${format(interval.frequency)} | ${interval.reason || "No reason recorded."}`;
 
   return [
-    { label: "WHICH", value: truncate(which, 34) },
+    { label: "WHICH", value: which },
     { label: "WHEN", value: when },
     { label: "WHY", value: why },
   ];
@@ -364,10 +374,43 @@ function intervalBubbleLines(interval) {
 
 function missBubbleLines(miss) {
   return [
-    { label: "WHICH", value: truncate(`${miss.taskName} #${miss.instance}`, 38) },
+    { label: "WHICH", value: `${miss.taskName} #${miss.instance}` },
     { label: "WHEN", value: `deadline t=${format(miss.missTime)}` },
-    { label: "WHY", value: truncate(`${format(miss.remainingActual)} actual time remained at the deadline.`, 58) },
+    { label: "WHY", value: `${format(miss.remainingActual)} actual time remained at the deadline.` },
   ];
+}
+
+function wrapText(value, maxWidth) {
+  const maxChars = Math.max(16, Math.floor(maxWidth / 6.4));
+  const words = String(value || "").split(/\s+/).filter(Boolean);
+  const lines = [];
+  let current = "";
+
+  words.forEach((word) => {
+    if (word.length > maxChars) {
+      if (current) {
+        lines.push(current);
+        current = "";
+      }
+      lines.push(word);
+      return;
+    }
+
+    const next = current ? `${current} ${word}` : word;
+    if (next.length > maxChars && current) {
+      lines.push(current);
+      current = word;
+      return;
+    }
+
+    current = next;
+  });
+
+  if (current) {
+    lines.push(current);
+  }
+
+  return lines.length > 0 ? lines : [""];
 }
 
 function drawAxis(svg, margin, y, width, simulationEnd, timeScale) {
