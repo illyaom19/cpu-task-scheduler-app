@@ -15,6 +15,7 @@ export function renderTimeline(target, result, options = {}) {
     educationalMode = false,
   } = options;
   target.textContent = "";
+  target.style.removeProperty("--trace-height");
 
   if (!result || !result.ok) {
     target.append(emptyState("Fix task inputs to render a schedule."));
@@ -37,6 +38,7 @@ export function renderTimeline(target, result, options = {}) {
   const axisY = layout.laneStart + taskLaneBlock + layout.afterLanes;
   const frequencyTop = axisY + layout.axisToFrequencyGap;
   const height = frequencyTop + layout.frequencyHeight + layout.bottomPadding;
+  target.style.setProperty("--trace-height", `${height}px`);
   const plotWidth = width - margin.left - margin.right;
   const timeScale = (time) => margin.left + (time / timelineEnd) * plotWidth;
   const svg = createSvg(width, height);

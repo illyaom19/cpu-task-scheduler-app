@@ -657,3 +657,20 @@ Action: handoff
 Summary: Preparing to commit and push the trace marker and readability changes to origin/main.
 Files touched: agents_log
 Verification: git status and git diff --stat reviewed before staging.
+2026-04-14 11:42 PDT - Agent: Codex
+Action: edit
+Summary: Starting trace viewport sizing fix so the timeline shell height follows the rendered SVG and never exposes a vertical graph scrollbar or clips the P-state graph.
+Files touched: agents_log, src/renderer.mjs, styles.css, index.html
+Verification: not run
+
+2026-04-14 11:43 PDT - Agent: Codex
+Action: test
+Summary: Completed dynamic trace viewport sizing. The timeline shell now uses the renderer-computed SVG height, keeps vertical overflow clipped rather than scrollable, and preserves horizontal timeline scrolling.
+Files touched: agents_log, index.html, src/renderer.mjs, styles.css
+Verification: node --check src/renderer.mjs passed; node --check src/app.mjs passed; node tests/scheduler.test.mjs passed 17 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=dynamic-trace-viewport-20260414 returned HTTP 200.
+
+2026-04-14 11:44 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the dynamic trace viewport sizing fix to origin/main.
+Files touched: agents_log
+Verification: git status and git diff --stat reviewed before staging.

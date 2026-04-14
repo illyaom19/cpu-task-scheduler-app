@@ -776,8 +776,9 @@ h2 {
 
 .timeline-shell {
   overflow-x: auto;
-  overflow-y: hidden;
-  min-height: min(62vh, 620px);
+  overflow-y: clip;
+  height: var(--trace-height, auto);
+  min-height: 0;
   border: 1px solid rgba(255, 138, 31, 0.28);
   border-radius: 8px;
   background:
@@ -792,8 +793,8 @@ h2 {
   display: block;
   width: auto;
   max-width: none;
-  min-height: 100%;
-  height: auto;
+  min-height: 0;
+  height: var(--trace-height, auto);
 }
 
 .axis-line,
