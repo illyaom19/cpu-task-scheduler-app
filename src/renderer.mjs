@@ -1,6 +1,7 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
 const MISS_BUBBLE_HOLD = 1.15;
 const MIN_VISIBLE_TIMELINE = 50;
+const MAX_VISIBLE_TIMELINE = 50;
 const LABEL_GUTTER = 168;
 
 export function renderTimeline(target, result, options = {}) {
@@ -21,9 +22,13 @@ export function renderTimeline(target, result, options = {}) {
   const enabledTasks = result.tasks.filter((task) => task.enabled);
   const taskLaneCount = showTaskLanes ? enabledTasks.length : 0;
   const layout = traceLayout(taskLaneCount);
-  const visibleEnd = Math.max(MIN_VISIBLE_TIMELINE, result.metrics.simulationEnd);
-  const width = Math.max(980, visibleEnd * 12);
   const margin = { left: LABEL_GUTTER, right: 22, top: 18 };
+  const visibleSpan = Math.min(MAX_VISIBLE_TIMELINE, Math.max(MIN_VISIBLE_TIMELINE, result.metrics.simulationEnd));
+  const visibleWidth = Math.max(720, target.clientWidth || 0);
+  const visiblePlotWidth = Math.max(360, visibleWidth - margin.left - margin.right);
+  const pixelsPerTimeUnit = visiblePlotWidth / visibleSpan;
+  const timelineEnd = Math.max(MIN_VISIBLE_TIMELINE, result.metrics.simulationEnd);
+  const width = margin.left + margin.right + timelineEnd * pixelsPerTimeUnit;
   const taskLaneBlock = taskLaneCount > 0
     ? taskLaneCount * layout.laneHeight + Math.max(0, taskLaneCount - 1) * layout.laneGap
     : 0;
@@ -31,7 +36,7 @@ export function renderTimeline(target, result, options = {}) {
   const frequencyTop = axisY + layout.axisToFrequencyGap;
   const height = frequencyTop + layout.frequencyHeight + layout.bottomPadding;
   const plotWidth = width - margin.left - margin.right;
-  const timeScale = (time) => margin.left + (time / visibleEnd) * plotWidth;
+  const timeScale = (time) => margin.left + (time / timelineEnd) * plotWidth;
   const svg = createSvg(width, height);
   const playheadTime = clamp(playbackTime, 0, result.metrics.simulationEnd);
   const playheadX = timeScale(playheadTime);
@@ -52,17 +57,17 @@ export function renderTimeline(target, result, options = {}) {
   svg.dataset.playheadX = String(playheadX);
   playbackCue.box = defaultPlaybackBox(playbackCue, timeScale, layout.sharedTop, layout.sharedHeight);
 
-  drawHeader(svg, margin, timeScale, visibleEnd);
-  drawCpuLane(svg, contentLayer, result, margin, layout.sharedTop, layout.sharedHeight, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue, visibleEnd);
+  drawHeader(svg, margin, timeScale, timelineEnd);
+  drawCpuLane(svg, contentLayer, result, margin, layout.sharedTop, layout.sharedHeight, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue, timelineEnd);
 
   if (showTaskLanes) {
-    drawTaskLanes(svg, contentLayer, result, enabledTasks, margin, layout.laneStart, layout.laneHeight, layout.laneGap, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue, visibleEnd);
+    drawTaskLanes(svg, contentLayer, result, enabledTasks, margin, layout.laneStart, layout.laneHeight, layout.laneGap, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue, timelineEnd);
   } else {
     appendText(svg, margin.left, layout.laneStart, "TASK LANES OFF", "axis-label muted-label");
   }
 
-  drawAxis(svg, margin, axisY, width, visibleEnd, timeScale);
-  drawFrequency(svg, contentLayer, result, margin, frequencyTop, layout.frequencyHeight, timeScale, revealTime, visibleEnd);
+  drawAxis(svg, margin, axisY, width, timelineEnd, timeScale);
+  drawFrequency(svg, contentLayer, result, margin, frequencyTop, layout.frequencyHeight, timeScale, revealTime, timelineEnd);
   svg.append(contentLayer);
 
   if (playbackModeActive) {

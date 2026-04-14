@@ -587,3 +587,21 @@ Action: handoff
 Summary: Preparing to commit and push the playback polish updates to origin/main.
 Files touched: agents_log, index.html, src/app.mjs, src/renderer.mjs, styles.css
 Verification: pending final pre-commit checks.
+
+2026-04-14 11:11 PDT - Agent: Codex
+Action: edit
+Summary: Starting trace width scaling update so 50 ms fills the visible graph width and longer timelines scroll horizontally.
+Files touched: agents_log
+Verification: not run
+
+2026-04-14 11:12 PDT - Agent: Codex
+Action: test
+Summary: Updated trace width calculation so 50 ms fills the available trace viewport and longer timelines extend horizontally for scrolling.
+Files touched: agents_log, index.html, src/renderer.mjs
+Verification: node --check passed for src/renderer.mjs, src/app.mjs, src/model.mjs, and src/presets.mjs; node tests/scheduler.test.mjs passed 15 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=responsive-trace-width-20260414 returned HTTP 200.
+
+2026-04-14 11:13 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the responsive trace-width update to origin/main.
+Files touched: agents_log, index.html, src/renderer.mjs
+Verification: pending final pre-commit checks.
