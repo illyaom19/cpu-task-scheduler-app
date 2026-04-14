@@ -1,5 +1,6 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
 const MISS_BUBBLE_HOLD = 1.15;
+const MIN_VISIBLE_TIMELINE = 50;
 
 export function renderTimeline(target, result, options = {}) {
   const {
@@ -17,8 +18,9 @@ export function renderTimeline(target, result, options = {}) {
   }
 
   const enabledTasks = result.tasks.filter((task) => task.enabled);
-  const width = Math.max(980, result.metrics.simulationEnd * 12);
-  const margin = { left: 88, right: 22, top: 18 };
+  const visibleEnd = Math.max(MIN_VISIBLE_TIMELINE, result.metrics.simulationEnd);
+  const width = Math.max(980, visibleEnd * 12);
+  const margin = { left: 168, right: 22, top: 18 };
   const sharedTop = 56;
   const sharedHeight = 48;
   const laneGap = 12;
@@ -31,7 +33,7 @@ export function renderTimeline(target, result, options = {}) {
   const frequencyHeight = 112;
   const height = frequencyTop + frequencyHeight + 24;
   const plotWidth = width - margin.left - margin.right;
-  const timeScale = (time) => margin.left + (time / result.metrics.simulationEnd) * plotWidth;
+  const timeScale = (time) => margin.left + (time / visibleEnd) * plotWidth;
   const svg = createSvg(width, height);
   const playheadTime = clamp(playbackTime, 0, result.metrics.simulationEnd);
   const playheadX = timeScale(playheadTime);
@@ -52,17 +54,17 @@ export function renderTimeline(target, result, options = {}) {
   svg.dataset.playheadX = String(playheadX);
   playbackCue.box = defaultPlaybackBox(playbackCue, timeScale, sharedTop, sharedHeight);
 
-  drawHeader(svg, margin, timeScale, result.metrics.simulationEnd);
-  drawCpuLane(svg, contentLayer, result, margin, sharedTop, sharedHeight, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue);
+  drawHeader(svg, margin, timeScale, visibleEnd);
+  drawCpuLane(svg, contentLayer, result, margin, sharedTop, sharedHeight, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue, visibleEnd);
 
   if (showTaskLanes) {
-    drawTaskLanes(svg, contentLayer, result, enabledTasks, margin, laneStart, laneHeight, laneGap, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue);
+    drawTaskLanes(svg, contentLayer, result, enabledTasks, margin, laneStart, laneHeight, laneGap, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue, visibleEnd);
   } else {
     appendText(svg, margin.left, laneStart, "TASK LANES OFF", "axis-label muted-label");
   }
 
-  drawAxis(svg, margin, axisY, width, result.metrics.simulationEnd, timeScale);
-  drawFrequency(svg, contentLayer, result, margin, frequencyTop, frequencyHeight, timeScale, revealTime);
+  drawAxis(svg, margin, axisY, width, visibleEnd, timeScale);
+  drawFrequency(svg, contentLayer, result, margin, frequencyTop, frequencyHeight, timeScale, revealTime, visibleEnd);
   svg.append(contentLayer);
 
   if (playbackModeActive) {
@@ -106,9 +108,9 @@ function drawHeader(svg, margin, timeScale, simulationEnd) {
   appendLine(svg, margin.left, 38, timeScale(simulationEnd), 38, "glow-line");
 }
 
-function drawCpuLane(svg, contentLayer, result, margin, y, laneHeight, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue) {
+function drawCpuLane(svg, contentLayer, result, margin, y, laneHeight, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue, visibleEnd) {
   appendText(svg, 20, y + 31, "CPU", "lane-label");
-  appendLine(svg, margin.left, y + laneHeight + 8, timeScale(result.metrics.simulationEnd), y + laneHeight + 8, "track-line");
+  appendLine(svg, margin.left, y + laneHeight + 8, timeScale(visibleEnd), y + laneHeight + 8, "track-line");
 
   result.trace
     .filter((interval) => interval.event === "execution" || interval.event === "idle")
@@ -145,13 +147,13 @@ function drawCpuLane(svg, contentLayer, result, margin, y, laneHeight, timeScale
   drawJobMarkers(contentLayer, result.jobs, result.misses, y, laneHeight, timeScale, result.metrics.simulationEnd, revealTime);
 }
 
-function drawTaskLanes(svg, contentLayer, result, tasks, margin, startY, laneHeight, laneGap, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue) {
+function drawTaskLanes(svg, contentLayer, result, tasks, margin, startY, laneHeight, laneGap, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue, visibleEnd) {
   appendText(svg, margin.left, startY - 16, "TASK LANES", "axis-label");
 
   tasks.forEach((task, index) => {
     const y = startY + index * (laneHeight + laneGap);
-    appendText(svg, 20, y + 24, task.name, selectedTaskId === task.id ? "lane-label selected-label" : "lane-label");
-    appendLine(svg, margin.left, y + laneHeight + 6, timeScale(result.metrics.simulationEnd), y + laneHeight + 6, "lane-grid");
+    appendText(svg, 20, y + 24, truncate(task.name, 20), selectedTaskId === task.id ? "lane-label selected-label" : "lane-label");
+    appendLine(svg, margin.left, y + laneHeight + 6, timeScale(visibleEnd), y + laneHeight + 6, "lane-grid");
 
     result.trace
       .filter((interval) => interval.taskId === task.id && interval.event === "execution")
@@ -243,10 +245,10 @@ function drawJobMarkers(parent, jobs, misses, y, laneHeight, timeScale, simulati
   });
 }
 
-function drawFrequency(svg, contentLayer, result, margin, top, height, timeScale, revealTime) {
+function drawFrequency(svg, contentLayer, result, margin, top, height, timeScale, revealTime, visibleEnd) {
   const graphHeight = height - 44;
   const bottom = top + graphHeight;
-  const xEnd = timeScale(result.metrics.simulationEnd);
+  const xEnd = timeScale(visibleEnd);
 
   appendText(svg, margin.left, top - 9, "P-STATE FREQUENCY", "axis-label hot-label");
   appendLine(svg, margin.left, bottom, xEnd, bottom, "track-line");

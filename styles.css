@@ -344,9 +344,9 @@ h2 {
 }
 
 .playback-bar {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto auto minmax(160px, 1fr) auto;
   align-items: center;
-  flex-wrap: wrap;
   gap: 8px;
   padding: 8px;
   border: 1px solid rgba(255, 138, 31, 0.22);
@@ -363,10 +363,29 @@ h2 {
 
 .playback-readout {
   min-width: 112px;
-  margin-left: auto;
   color: var(--line-hot-strong);
   text-align: right;
   text-shadow: 0 0 12px rgba(255, 138, 31, 0.28);
+}
+
+.playback-scrubber {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.playback-scrubber input[type="range"] {
+  width: 100%;
+  cursor: grab;
+}
+
+.playback-scrubber input[type="range"]:active {
+  cursor: grabbing;
 }
 
 .chip-button {
@@ -377,6 +396,26 @@ h2 {
 .scenario-list {
   display: grid;
   gap: 8px;
+}
+
+.scenario-panel {
+  border: 1px solid rgba(255, 138, 31, 0.18);
+  border-radius: 8px;
+  padding: 0;
+  background: rgba(13, 17, 22, 0.42);
+}
+
+.scenario-panel summary {
+  padding: 9px 10px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.scenario-panel .scenario-list {
+  padding: 0 8px 8px;
 }
 
 .scenario-button {
@@ -946,8 +985,17 @@ h2 {
 
   .command-band,
   .terminal-actions,
-  .section-header {
+  .section-header,
+  .playback-bar {
     display: grid;
+  }
+
+  .playback-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .playback-readout {
+    text-align: left;
   }
 
   .control-panel,

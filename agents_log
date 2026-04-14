@@ -395,3 +395,33 @@ Action: handoff
 Summary: Preparing to commit and push the missed-deadline reasoning and playback guidance changes to origin/main.
 Files touched: agents_log, index.html, src/app.mjs, src/renderer.mjs, styles.css
 Verification: pre-commit checks already passed; pending git commit and push.
+
+2026-04-13 23:08 PDT - Agent: Codex
+Action: edit
+Summary: Starting UI controls update: add draggable timeline seeking, collapse Premade Scenarios by default, and remove the redundant Run button.
+Files touched: agents_log
+Verification: not run
+
+2026-04-13 23:09 PDT - Agent: Codex
+Action: test
+Summary: Added a draggable playback timeline slider, made Premade Scenarios a collapsed details panel, and removed the Run button/listener now that simulation autoruns.
+Files touched: agents_log, index.html, src/app.mjs, styles.css
+Verification: node --check src/app.mjs passed; node --check src/renderer.mjs passed; node tests/scheduler.test.mjs passed 12 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=timeline-slider-20260413 returned HTTP 200.
+
+2026-04-13 23:09 PDT - Agent: Codex
+Action: edit
+Summary: Starting trace readability update to enforce a 50 ms minimum visual timeline and increase the task-lane label gutter.
+Files touched: agents_log
+Verification: not run
+
+2026-04-13 23:11 PDT - Agent: Codex
+Action: test
+Summary: Updated trace rendering to use a 50 ms minimum visual horizon, widened the left label gutter, and truncated task lane names before they can overlap timeline content.
+Files touched: agents_log, index.html, src/renderer.mjs
+Verification: node --check src/app.mjs passed; node --check src/renderer.mjs passed; node tests/scheduler.test.mjs passed 12 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=trace-readability-20260413 returned HTTP 200.
+
+2026-04-13 23:12 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the playback slider, collapsed scenarios, removed Run button, and trace readability updates to origin/main.
+Files touched: agents_log, index.html, src/app.mjs, src/renderer.mjs, styles.css
+Verification: pending final pre-commit checks.

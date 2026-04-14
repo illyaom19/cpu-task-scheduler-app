@@ -47,9 +47,9 @@ function bindElements() {
   elements.exportBox = document.querySelector("#export-box");
   elements.importBox = document.querySelector("#import-box");
   elements.runState = document.querySelector("#run-state");
-  elements.runSimulation = document.querySelector("#run-simulation");
   elements.playbackToggle = document.querySelector("#playback-toggle");
   elements.playbackReset = document.querySelector("#playback-reset");
+  elements.playbackSlider = document.querySelector("#playback-slider");
   elements.playbackReadout = document.querySelector("#playback-readout");
 }
 
@@ -59,16 +59,16 @@ function bindStaticEvents() {
     requestRun();
   });
 
-  elements.runSimulation.addEventListener("click", () => {
-    rerun();
-  });
-
   elements.playbackToggle.addEventListener("click", () => {
     togglePlayback();
   });
 
   elements.playbackReset.addEventListener("click", () => {
     resetPlayback();
+  });
+
+  elements.playbackSlider.addEventListener("input", (event) => {
+    seekPlayback(Number(event.target.value));
   });
 
   document.querySelector("#add-task").addEventListener("click", () => {
@@ -530,6 +530,20 @@ function resetPlayback() {
   renderPlaybackFrame({ followPlayhead: false });
 }
 
+function seekPlayback(time) {
+  if (!state.result?.ok) {
+    return;
+  }
+
+  cancelPlaybackFrame();
+  state.playbackRunning = false;
+  state.playbackModeActive = true;
+  state.playbackTime = clamp(time, 0, state.result.metrics.simulationEnd);
+  state.playbackInterval = activeIntervalAt(state.playbackTime);
+  state.playbackMiss = activeMissAt(state.playbackTime);
+  renderPlaybackFrame({ followPlayhead: true });
+}
+
 function tickPlayback(timestamp) {
   if (!state.playbackRunning || !state.result?.ok) {
     return;
@@ -585,6 +599,9 @@ function renderPlaybackControls() {
   elements.playbackToggle.textContent = state.playbackRunning ? "Pause" : "Play";
   elements.playbackReset.disabled = !state.result?.ok;
   elements.playbackToggle.disabled = !state.result?.ok;
+  elements.playbackSlider.disabled = !state.result?.ok;
+  elements.playbackSlider.max = String(simulationEnd);
+  elements.playbackSlider.value = String(Math.min(state.playbackTime, simulationEnd));
   elements.playbackReadout.textContent = `t=${formatPlaybackTime(state.playbackTime)} / ${formatPlaybackTime(simulationEnd)}`;
 }
 
@@ -688,6 +705,10 @@ function defaultSimulationEnd(fallback = DEFAULT_SIMULATION_END) {
 
 function formatPlaybackTime(value) {
   return Number(value).toFixed(1).replace(/\.0$/, "");
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, Number(value) || 0));
 }
 
 function toPercent(value) {
