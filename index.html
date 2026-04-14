@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Look-Ahead EDF CPU Scheduler</title>
-    <link rel="stylesheet" href="styles.css?v=viewport-fit-20260413">
+    <link rel="stylesheet" href="styles.css?v=playback-reveal-20260413">
   </head>
   <body>
     <main class="app-shell">
@@ -71,6 +71,11 @@
             <h2>Trace</h2>
             <p id="run-state">EDF priority, conservative look-ahead reservation, discrete P-states.</p>
           </div>
+          <div class="playback-bar" aria-label="Trace playback controls">
+            <button id="playback-toggle" type="button">Play</button>
+            <button id="playback-reset" type="button">Reset</button>
+            <output id="playback-readout" class="playback-readout">t=0 / 0</output>
+          </div>
           <div id="summary" class="summary-grid" aria-live="polite"></div>
           <div id="timeline" class="timeline-shell"></div>
           <div id="inspector" class="inspector"></div>
@@ -96,6 +101,6 @@
       </section>
     </main>
 
-    <script type="module" src="src/app.mjs?v=viewport-fit-20260413"></script>
+    <script type="module" src="src/app.mjs?v=playback-reveal-20260413"></script>
   </body>
 </html>

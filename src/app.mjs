@@ -15,10 +15,19 @@ const state = {
   showTaskLanes: false,
   stale: false,
   expandedTaskIds: new Set(),
+  playbackTime: 0,
+  playbackRunning: false,
+  playbackModeActive: false,
+  playbackStartedAt: 0,
+  playbackTimeAtStart: 0,
+  playbackFrameId: null,
+  playbackInterval: null,
 };
 
 const elements = {};
 const EXECUTION_FIELDS = new Set(["actualExecutionTime", "wcet"]);
+const PLAYBACK_MS_PER_TIME_UNIT = 100;
+const PLAYBACK_EDGE_RATIO = 0.15;
 
 document.addEventListener("DOMContentLoaded", () => {
   bindElements();
@@ -43,6 +52,9 @@ function bindElements() {
   elements.runSimulation = document.querySelector("#run-simulation");
   elements.autoRun = document.querySelector("#auto-run");
   elements.showTaskLanes = document.querySelector("#show-task-lanes");
+  elements.playbackToggle = document.querySelector("#playback-toggle");
+  elements.playbackReset = document.querySelector("#playback-reset");
+  elements.playbackReadout = document.querySelector("#playback-readout");
 }
 
 function bindStaticEvents() {
@@ -66,10 +78,15 @@ function bindStaticEvents() {
 
   elements.showTaskLanes.addEventListener("change", (event) => {
     state.showTaskLanes = event.target.checked;
-    renderTimeline(elements.timeline, state.result, {
-      selectedTaskId: state.selectedTaskId,
-      showTaskLanes: state.showTaskLanes,
-    });
+    renderTimeline(elements.timeline, state.result, timelineOptions());
+  });
+
+  elements.playbackToggle.addEventListener("click", () => {
+    togglePlayback();
+  });
+
+  elements.playbackReset.addEventListener("click", () => {
+    resetPlayback();
   });
 
   document.querySelector("#add-task").addEventListener("click", () => {
@@ -98,7 +115,7 @@ function bindStaticEvents() {
     }
 
     const interval = JSON.parse(intervalNode.dataset.interval);
-      state.selectedInterval = interval;
+    state.selectedInterval = interval;
 
     if (interval.taskId) {
       traceTask(interval.taskId);
@@ -333,6 +350,7 @@ function toggleTaskTrace(taskId) {
 }
 
 function rerun() {
+  resetPlaybackForTrace();
   state.stale = false;
   elements.simulationEnd.value = state.simulationEnd;
   elements.autoRun.checked = state.autoRun;
@@ -341,12 +359,10 @@ function rerun() {
   renderTasks();
   renderErrors();
   renderSummary();
-  renderTimeline(elements.timeline, state.result, {
-    selectedTaskId: state.selectedTaskId,
-    showTaskLanes: state.showTaskLanes,
-  });
-  renderInspector(elements.inspector, state.selectedInterval);
+  renderTimeline(elements.timeline, state.result, timelineOptions());
+  renderCurrentInspector();
   renderRunState();
+  renderPlaybackControls();
 }
 
 function clearTrace() {
@@ -356,11 +372,8 @@ function clearTrace() {
 
 function refreshTraceView() {
   renderTasks();
-  renderTimeline(elements.timeline, state.result, {
-    selectedTaskId: state.selectedTaskId,
-    showTaskLanes: state.showTaskLanes,
-  });
-  renderInspector(elements.inspector, state.selectedInterval);
+  renderTimeline(elements.timeline, state.result, timelineOptions());
+  renderCurrentInspector();
 }
 
 function requestRun() {
@@ -369,10 +382,14 @@ function requestRun() {
     return;
   }
 
+  resetPlaybackForTrace();
   state.stale = true;
   renderTasks();
   renderErrors();
+  renderTimeline(elements.timeline, state.result, timelineOptions());
+  renderCurrentInspector();
   renderRunState();
+  renderPlaybackControls();
 }
 
 function renderRunState() {
@@ -431,6 +448,156 @@ function renderSummary() {
   }
 }
 
+function togglePlayback() {
+  if (state.playbackRunning) {
+    pausePlayback();
+    return;
+  }
+
+  startPlayback();
+}
+
+function startPlayback() {
+  if (state.stale || !state.result) {
+    rerun();
+  }
+
+  if (!state.result?.ok) {
+    return;
+  }
+
+  const simulationEnd = state.result.metrics.simulationEnd;
+  if (state.playbackTime >= simulationEnd) {
+    state.playbackTime = 0;
+  }
+
+  state.playbackModeActive = true;
+  state.playbackRunning = true;
+  state.playbackStartedAt = performance.now();
+  state.playbackTimeAtStart = state.playbackTime;
+  state.playbackInterval = activeIntervalAt(state.playbackTime);
+  renderPlaybackFrame({ followPlayhead: true });
+  state.playbackFrameId = requestAnimationFrame(tickPlayback);
+}
+
+function pausePlayback() {
+  cancelPlaybackFrame();
+  state.playbackRunning = false;
+  renderPlaybackControls();
+}
+
+function resetPlayback() {
+  cancelPlaybackFrame();
+  state.playbackRunning = false;
+  state.playbackModeActive = true;
+  state.playbackTime = 0;
+  state.playbackInterval = activeIntervalAt(state.playbackTime);
+  renderPlaybackFrame({ followPlayhead: false });
+}
+
+function tickPlayback(timestamp) {
+  if (!state.playbackRunning || !state.result?.ok) {
+    return;
+  }
+
+  const elapsed = (timestamp - state.playbackStartedAt) / PLAYBACK_MS_PER_TIME_UNIT;
+  const simulationEnd = state.result.metrics.simulationEnd;
+  state.playbackTime = Math.min(simulationEnd, state.playbackTimeAtStart + elapsed);
+  state.playbackInterval = activeIntervalAt(state.playbackTime);
+  renderPlaybackFrame({ followPlayhead: true });
+
+  if (state.playbackTime >= simulationEnd) {
+    state.playbackRunning = false;
+    state.playbackFrameId = null;
+    renderPlaybackControls();
+    return;
+  }
+
+  state.playbackFrameId = requestAnimationFrame(tickPlayback);
+}
+
+function renderPlaybackFrame(options = {}) {
+  renderTimeline(elements.timeline, state.result, timelineOptions());
+  renderCurrentInspector();
+  renderPlaybackControls();
+
+  if (options.followPlayhead && state.playbackRunning) {
+    followPlayheadNearEdge();
+  }
+}
+
+function resetPlaybackForTrace() {
+  cancelPlaybackFrame();
+  state.playbackTime = 0;
+  state.playbackRunning = false;
+  state.playbackModeActive = false;
+  state.playbackStartedAt = 0;
+  state.playbackTimeAtStart = 0;
+  state.playbackInterval = null;
+}
+
+function cancelPlaybackFrame() {
+  if (state.playbackFrameId != null) {
+    cancelAnimationFrame(state.playbackFrameId);
+    state.playbackFrameId = null;
+  }
+}
+
+function renderPlaybackControls() {
+  const simulationEnd = state.result?.metrics?.simulationEnd || state.simulationEnd || 0;
+  elements.playbackToggle.textContent = state.playbackRunning ? "Pause" : "Play";
+  elements.playbackReset.disabled = !state.result?.ok;
+  elements.playbackToggle.disabled = !state.result?.ok;
+  elements.playbackReadout.textContent = `t=${formatPlaybackTime(state.playbackTime)} / ${formatPlaybackTime(simulationEnd)}`;
+}
+
+function renderCurrentInspector() {
+  renderInspector(elements.inspector, state.playbackModeActive ? state.playbackInterval : state.selectedInterval);
+}
+
+function timelineOptions() {
+  return {
+    selectedTaskId: state.selectedTaskId,
+    showTaskLanes: state.showTaskLanes,
+    playbackTime: state.playbackTime,
+    playbackModeActive: state.playbackModeActive,
+  };
+}
+
+function activeIntervalAt(time) {
+  if (!state.result?.ok) {
+    return null;
+  }
+
+  const simulationEnd = state.result.metrics.simulationEnd;
+  const point = Math.max(0, Math.min(time, Math.max(0, simulationEnd - 0.000001)));
+
+  return state.result.trace.find((interval) => (
+    interval.end > interval.start
+      && interval.start <= point + 0.000001
+      && interval.end > point
+  )) || null;
+}
+
+function followPlayheadNearEdge() {
+  const svg = elements.timeline.querySelector("svg");
+  const playheadX = Number(svg?.dataset.playheadX);
+
+  if (!Number.isFinite(playheadX) || elements.timeline.clientWidth <= 0) {
+    return;
+  }
+
+  const threshold = elements.timeline.clientWidth * PLAYBACK_EDGE_RATIO;
+  const visibleLeft = elements.timeline.scrollLeft;
+  const visibleRight = visibleLeft + elements.timeline.clientWidth;
+
+  if (playheadX > visibleRight - threshold) {
+    elements.timeline.scrollLeft = playheadX - elements.timeline.clientWidth + threshold;
+  } else if (playheadX < visibleLeft + threshold) {
+    elements.timeline.scrollLeft = Math.max(0, playheadX - threshold);
+  }
+}
+
 function importScenario() {
   try {
     const payload = JSON.parse(elements.importBox.value);
@@ -456,6 +623,10 @@ function metric(label, value, tone = "") {
 
 function defaultSimulationEnd(tasks, fallback = DEFAULT_SIMULATION_END) {
   return calculateHyperperiod(tasks) || fallback;
+}
+
+function formatPlaybackTime(value) {
+  return Number(value).toFixed(1).replace(/\.0$/, "");
 }
 
 function toPercent(value) {

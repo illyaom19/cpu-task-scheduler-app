@@ -293,3 +293,39 @@ Verification: node --check passed for src/app.mjs, src/model.mjs, src/renderer.m
 - 2026-04-13 21:50 PDT: Planned timeline viewport adjustment so the trace height follows graph content dynamically while retaining horizontal-only timeline scrolling.
 - 2026-04-13 21:50 PDT: Implemented horizontal-only trace scrolling; timeline height now follows SVG content dynamically with no vertical trace scrollbar. Verified renderer syntax, scheduler tests, and diff whitespace.
 - 2026-04-13 21:52 PDT: Preparing commit and push for viewport-bounded layout and timeline scroll behavior changes.
+
+2026-04-13 22:06 PDT - Agent: Codex
+Action: edit
+Summary: Starting implementation of simple trace playback with Play/Pause, Reset, reveal mode, playhead, inspector updates, and edge-follow horizontal scrolling.
+Files touched: agents_log
+Verification: not run
+
+2026-04-13 22:11 PDT - Agent: Codex
+Action: test
+Summary: Implemented playback controls, reveal/playhead rendering, active interval inspector updates, and edge-follow horizontal scrolling. Running verification on the updated zero-compile app.
+Files touched: agents_log, index.html, src/app.mjs, src/renderer.mjs, styles.css
+Verification: pending
+
+2026-04-13 22:12 PDT - Agent: Codex
+Action: test
+Summary: Verified simple playback implementation and local server response with cache-busted assets.
+Files touched: none
+Verification: node --check src/app.mjs passed; node --check src/renderer.mjs passed; node tests/scheduler.test.mjs passed 12 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=playback-20260413 returned HTTP 200.
+
+2026-04-13 22:18 PDT - Agent: Codex
+Action: debugging
+Summary: Investigating playback reveal showing a fully revealed trace. Identified the SVG group clipPath reveal as the likely fragile path and will replace it with time-windowed drawing.
+Files touched: agents_log
+Verification: not run
+
+2026-04-13 22:20 PDT - Agent: Codex
+Action: edit
+Summary: Replaced clipPath-based playback reveal with deterministic time-windowed trace drawing. Future blocks, markers, miss labels, and frequency bars are omitted until the playhead reaches them; active intervals are truncated to the playhead.
+Files touched: agents_log, index.html, src/renderer.mjs
+Verification: node --check src/app.mjs passed; node --check src/renderer.mjs passed; node tests/scheduler.test.mjs passed 12 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=playback-reveal-20260413 returned HTTP 200.
+
+2026-04-13 22:21 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the simple playback feature and reveal fix to origin/main.
+Files touched: agents_log, index.html, src/app.mjs, src/renderer.mjs, styles.css
+Verification: pending final pre-commit checks

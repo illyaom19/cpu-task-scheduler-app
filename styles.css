@@ -316,6 +316,32 @@ h2 {
   gap: 8px;
 }
 
+.playback-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid rgba(255, 138, 31, 0.22);
+  border-radius: 8px;
+  background: rgba(13, 17, 22, 0.76);
+}
+
+.playback-bar button {
+  min-width: 72px;
+  min-height: 30px;
+  padding: 0 10px;
+  text-transform: uppercase;
+}
+
+.playback-readout {
+  min-width: 112px;
+  margin-left: auto;
+  color: var(--line-hot-strong);
+  text-align: right;
+  text-shadow: 0 0 12px rgba(255, 138, 31, 0.28);
+}
+
 .chip-button {
   padding: 0 12px;
   color: #ffd5a4;
@@ -657,6 +683,12 @@ h2 {
   filter: drop-shadow(0 0 5px rgba(255, 138, 31, 0.18));
 }
 
+.interval.playing {
+  stroke: var(--line-hot-strong);
+  stroke-width: 2;
+  filter: drop-shadow(0 0 10px rgba(255, 176, 0, 0.78));
+}
+
 .interval.execution {
   cursor: crosshair;
 }
@@ -679,6 +711,18 @@ h2 {
 
 .idle-frequency {
   fill: rgba(151, 161, 173, 0.18);
+}
+
+.playhead-line {
+  stroke: var(--line-hot-strong);
+  stroke-width: 2;
+  filter: drop-shadow(0 0 8px rgba(255, 176, 0, 0.88));
+}
+
+.playhead-label {
+  fill: var(--line-hot-strong);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .inspector {
