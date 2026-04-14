@@ -301,7 +301,7 @@ h2 {
 }
 
 .simulation-panel {
-  overflow-x: hidden;
+  overflow: auto;
 }
 
 .panel-section {
@@ -668,6 +668,7 @@ h2 {
 .timeline-shell {
   overflow-x: auto;
   overflow-y: hidden;
+  min-height: min(62vh, 620px);
   border: 1px solid rgba(255, 138, 31, 0.28);
   border-radius: 8px;
   background:
@@ -682,6 +683,7 @@ h2 {
   display: block;
   width: auto;
   max-width: none;
+  min-height: 100%;
   height: auto;
 }
 

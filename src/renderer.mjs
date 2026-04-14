@@ -1,6 +1,7 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
 const MISS_BUBBLE_HOLD = 1.15;
 const MIN_VISIBLE_TIMELINE = 50;
+const LABEL_GUTTER = 168;
 
 export function renderTimeline(target, result, options = {}) {
   const {
@@ -18,20 +19,17 @@ export function renderTimeline(target, result, options = {}) {
   }
 
   const enabledTasks = result.tasks.filter((task) => task.enabled);
+  const taskLaneCount = showTaskLanes ? enabledTasks.length : 0;
+  const layout = traceLayout(taskLaneCount);
   const visibleEnd = Math.max(MIN_VISIBLE_TIMELINE, result.metrics.simulationEnd);
   const width = Math.max(980, visibleEnd * 12);
-  const margin = { left: 168, right: 22, top: 18 };
-  const sharedTop = 56;
-  const sharedHeight = 48;
-  const laneGap = 12;
-  const laneHeight = 34;
-  const taskLaneCount = showTaskLanes ? enabledTasks.length : 0;
-  const laneStart = sharedTop + sharedHeight + 48;
-  const taskLaneBlock = taskLaneCount * (laneHeight + laneGap);
-  const axisY = laneStart + taskLaneBlock + 18;
-  const frequencyTop = axisY + 46;
-  const frequencyHeight = 112;
-  const height = frequencyTop + frequencyHeight + 24;
+  const margin = { left: LABEL_GUTTER, right: 22, top: 18 };
+  const taskLaneBlock = taskLaneCount > 0
+    ? taskLaneCount * layout.laneHeight + Math.max(0, taskLaneCount - 1) * layout.laneGap
+    : 0;
+  const axisY = layout.laneStart + taskLaneBlock + layout.afterLanes;
+  const frequencyTop = axisY + layout.axisToFrequencyGap;
+  const height = frequencyTop + layout.frequencyHeight + layout.bottomPadding;
   const plotWidth = width - margin.left - margin.right;
   const timeScale = (time) => margin.left + (time / visibleEnd) * plotWidth;
   const svg = createSvg(width, height);
@@ -52,19 +50,19 @@ export function renderTimeline(target, result, options = {}) {
   };
 
   svg.dataset.playheadX = String(playheadX);
-  playbackCue.box = defaultPlaybackBox(playbackCue, timeScale, sharedTop, sharedHeight);
+  playbackCue.box = defaultPlaybackBox(playbackCue, timeScale, layout.sharedTop, layout.sharedHeight);
 
   drawHeader(svg, margin, timeScale, visibleEnd);
-  drawCpuLane(svg, contentLayer, result, margin, sharedTop, sharedHeight, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue, visibleEnd);
+  drawCpuLane(svg, contentLayer, result, margin, layout.sharedTop, layout.sharedHeight, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue, visibleEnd);
 
   if (showTaskLanes) {
-    drawTaskLanes(svg, contentLayer, result, enabledTasks, margin, laneStart, laneHeight, laneGap, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue, visibleEnd);
+    drawTaskLanes(svg, contentLayer, result, enabledTasks, margin, layout.laneStart, layout.laneHeight, layout.laneGap, timeScale, selectedTaskId, activeInterval, revealTime, playbackCue, visibleEnd);
   } else {
-    appendText(svg, margin.left, laneStart, "TASK LANES OFF", "axis-label muted-label");
+    appendText(svg, margin.left, layout.laneStart, "TASK LANES OFF", "axis-label muted-label");
   }
 
   drawAxis(svg, margin, axisY, width, visibleEnd, timeScale);
-  drawFrequency(svg, contentLayer, result, margin, frequencyTop, frequencyHeight, timeScale, revealTime, visibleEnd);
+  drawFrequency(svg, contentLayer, result, margin, frequencyTop, layout.frequencyHeight, timeScale, revealTime, visibleEnd);
   svg.append(contentLayer);
 
   if (playbackModeActive) {
@@ -75,6 +73,28 @@ export function renderTimeline(target, result, options = {}) {
   appendLegend(svg, margin.left, height - 24);
 
   target.append(svg);
+}
+
+function traceLayout(taskLaneCount) {
+  const dense = taskLaneCount >= 10;
+  const roomy = taskLaneCount <= 6;
+  const sharedTop = 56;
+  const sharedHeight = 54;
+  const laneHeight = roomy ? 42 : 38;
+  const laneGap = dense ? 8 : 12;
+  const laneStart = sharedTop + sharedHeight + 52;
+
+  return {
+    sharedTop,
+    sharedHeight,
+    laneHeight,
+    laneGap,
+    laneStart,
+    afterLanes: dense ? 28 : 34,
+    axisToFrequencyGap: 52,
+    frequencyHeight: 118,
+    bottomPadding: 30,
+  };
 }
 
 export function renderInspector(target, interval) {
@@ -152,7 +172,7 @@ function drawTaskLanes(svg, contentLayer, result, tasks, margin, startY, laneHei
 
   tasks.forEach((task, index) => {
     const y = startY + index * (laneHeight + laneGap);
-    appendText(svg, 20, y + 24, truncate(task.name, 20), selectedTaskId === task.id ? "lane-label selected-label" : "lane-label");
+    appendText(svg, 20, y + Math.min(28, laneHeight - 10), truncate(task.name, 20), selectedTaskId === task.id ? "lane-label selected-label" : "lane-label");
     appendLine(svg, margin.left, y + laneHeight + 6, timeScale(visibleEnd), y + laneHeight + 6, "lane-grid");
 
     result.trace

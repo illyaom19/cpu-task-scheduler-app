@@ -425,3 +425,21 @@ Action: handoff
 Summary: Preparing to commit and push the playback slider, collapsed scenarios, removed Run button, and trace readability updates to origin/main.
 Files touched: agents_log, index.html, src/app.mjs, src/renderer.mjs, styles.css
 Verification: pending final pre-commit checks.
+
+2026-04-13 23:17 PDT - Agent: Codex
+Action: edit
+Summary: Starting implementation of dynamic trace vertical expansion for dense task sets, with a focus on lane spacing and readable graph layout.
+Files touched: agents_log
+Verification: not run
+
+2026-04-13 23:18 PDT - Agent: Codex
+Action: test
+Summary: Implemented dynamic trace vertical expansion with a reusable layout helper, roomier task lanes, dense-set gap handling, a taller trace shell, and cache-busted assets.
+Files touched: agents_log, index.html, src/renderer.mjs, styles.css
+Verification: node --check src/renderer.mjs passed; node --check src/app.mjs passed; node tests/scheduler.test.mjs passed 12 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=dynamic-trace-height-20260413 returned HTTP 200.
+
+2026-04-13 23:19 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the dynamic trace-height readability changes to origin/main.
+Files touched: agents_log, index.html, src/renderer.mjs, styles.css
+Verification: pending final pre-commit checks.
