@@ -443,3 +443,21 @@ Action: handoff
 Summary: Preparing to commit and push the dynamic trace-height readability changes to origin/main.
 Files touched: agents_log, index.html, src/renderer.mjs, styles.css
 Verification: pending final pre-commit checks.
+
+2026-04-13 23:23 PDT - Agent: Codex
+Action: edit
+Summary: Starting UI cleanup to move simulation end editing into the playback readout and improve trace block label readability.
+Files touched: agents_log
+Verification: not run
+
+2026-04-13 23:25 PDT - Agent: Codex
+Action: test
+Summary: Moved simulation end editing into the playback t=current/end readout, removed the header field, and made trace block labels white outlined text that only renders when the full label fits.
+Files touched: agents_log, index.html, src/app.mjs, src/renderer.mjs, styles.css
+Verification: node --check src/app.mjs passed; node --check src/renderer.mjs passed; node tests/scheduler.test.mjs passed 12 tests; git diff --check passed; curl -I http://127.0.0.1:8000/?v=inline-end-labels-20260413 returned HTTP 200.
+
+2026-04-13 23:25 PDT - Agent: Codex
+Action: handoff
+Summary: Preparing to commit and push the inline simulation end control and trace label readability updates to origin/main.
+Files touched: agents_log, index.html, src/app.mjs, src/renderer.mjs, styles.css
+Verification: pending final pre-commit checks.

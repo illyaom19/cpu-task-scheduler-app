@@ -51,6 +51,7 @@ function bindElements() {
   elements.playbackReset = document.querySelector("#playback-reset");
   elements.playbackSlider = document.querySelector("#playback-slider");
   elements.playbackReadout = document.querySelector("#playback-readout");
+  elements.playbackCurrent = document.querySelector("#playback-current");
 }
 
 function bindStaticEvents() {
@@ -602,7 +603,7 @@ function renderPlaybackControls() {
   elements.playbackSlider.disabled = !state.result?.ok;
   elements.playbackSlider.max = String(simulationEnd);
   elements.playbackSlider.value = String(Math.min(state.playbackTime, simulationEnd));
-  elements.playbackReadout.textContent = `t=${formatPlaybackTime(state.playbackTime)} / ${formatPlaybackTime(simulationEnd)}`;
+  elements.playbackCurrent.textContent = formatPlaybackTime(state.playbackTime);
 }
 
 function renderCurrentInspector() {

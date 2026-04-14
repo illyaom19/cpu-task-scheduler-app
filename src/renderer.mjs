@@ -229,9 +229,13 @@ function drawInterval(svg, interval, box) {
   rect.append(el("title", {}, tooltip(interval)));
   (box.parent || svg).append(rect);
 
-  if (box.label && box.width > 34) {
-    appendText(box.parent || svg, box.x + 8, box.y + Math.min(31, box.height - 8), box.label, "block-label");
+  if (box.label && labelFits(box.label, box.width)) {
+    appendText(box.parent || svg, box.x + 8, box.y + Math.min(31, box.height - 8), box.label, `block-label ${isIdle ? "idle-block-label" : ""}`);
   }
+}
+
+function labelFits(label, width) {
+  return width >= String(label).length * 7 + 16;
 }
 
 function drawJobMarkers(parent, jobs, misses, y, laneHeight, timeScale, simulationEnd, revealTime = simulationEnd) {

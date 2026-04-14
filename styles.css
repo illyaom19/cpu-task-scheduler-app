@@ -158,7 +158,7 @@ h2 {
 .command-band {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: start;
   gap: 18px;
   padding: 16px clamp(16px, 3vw, 32px);
   border-bottom: 1px solid var(--line);
@@ -363,9 +363,23 @@ h2 {
 
 .playback-readout {
   min-width: 112px;
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: 6px;
   color: var(--line-hot-strong);
   text-align: right;
   text-shadow: 0 0 12px rgba(255, 138, 31, 0.28);
+}
+
+.playback-end-input {
+  width: 58px;
+  min-height: 28px;
+  padding: 0 6px;
+  border-color: rgba(255, 176, 0, 0.5);
+  color: var(--line-hot-strong);
+  text-align: right;
+  background: rgba(8, 12, 16, 0.76);
 }
 
 .playback-scrubber {
@@ -734,8 +748,15 @@ h2 {
 }
 
 .block-label {
-  fill: #101010;
-  font-weight: 700;
+  fill: var(--text);
+  font-weight: 800;
+  paint-order: stroke fill;
+  stroke: rgba(0, 0, 0, 0.72);
+  stroke-width: 3px;
+}
+
+.idle-block-label {
+  fill: #ffffff;
 }
 
 .release-marker {
@@ -998,6 +1019,7 @@ h2 {
 
   .playback-readout {
     text-align: left;
+    justify-content: start;
   }
 
   .control-panel,
