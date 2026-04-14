@@ -24,6 +24,7 @@
 body {
   margin: 0;
   min-width: 320px;
+  overflow: hidden;
   color: var(--text);
   background:
     radial-gradient(circle at 50% -10%, rgba(255, 138, 31, 0.14), transparent 36rem),
@@ -122,7 +123,7 @@ p {
 
 h1 {
   max-width: 100%;
-  font-size: clamp(2rem, 7vw, 5rem);
+  font-size: 3rem;
   line-height: 0.92;
   letter-spacing: 0;
   text-transform: uppercase;
@@ -136,14 +137,18 @@ h2 {
 
 .app-shell {
   min-height: 100vh;
+  height: 100vh;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  overflow: hidden;
 }
 
 .command-band {
   display: flex;
-  align-items: end;
+  align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  padding: 32px clamp(16px, 4vw, 48px);
+  gap: 18px;
+  padding: 16px clamp(16px, 3vw, 32px);
   border-bottom: 1px solid var(--line);
   background:
     linear-gradient(180deg, rgba(255, 138, 31, 0.08), transparent 62%),
@@ -152,7 +157,7 @@ h2 {
 }
 
 .eyebrow {
-  margin-bottom: 10px;
+  margin-bottom: 6px;
   color: var(--line-hot);
   text-transform: uppercase;
   text-shadow: 0 0 16px var(--glow);
@@ -160,7 +165,7 @@ h2 {
 
 .terminal-actions {
   display: flex;
-  align-items: end;
+  align-items: center;
   justify-content: end;
   flex-wrap: wrap;
   gap: 12px;
@@ -228,7 +233,7 @@ h2 {
 }
 
 .algorithm-brief {
-  margin: 16px clamp(16px, 4vw, 48px) 0;
+  margin: 8px clamp(16px, 3vw, 32px) 0;
   border: 1px solid rgba(255, 138, 31, 0.32);
   border-radius: 8px;
   background: rgba(13, 17, 22, 0.86);
@@ -236,7 +241,7 @@ h2 {
 }
 
 .algorithm-brief summary {
-  padding: 12px 16px;
+  padding: 8px 12px;
   color: var(--line-hot-strong);
   cursor: pointer;
   text-transform: uppercase;
@@ -244,24 +249,29 @@ h2 {
 
 .algorithm-brief p {
   max-width: 980px;
-  padding: 0 16px 16px;
+  padding: 0 12px 10px;
   color: var(--muted);
-  line-height: 1.6;
+  line-height: 1.45;
 }
 
 .workspace {
   display: grid;
   grid-template-columns: minmax(320px, min(34vw, 460px)) minmax(0, 1fr);
-  min-height: calc(100vh - 160px);
+  height: auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .control-panel,
 .simulation-panel {
   display: grid;
   align-content: start;
-  gap: 18px;
+  gap: 12px;
   min-width: 0;
-  padding: 22px;
+  min-height: 0;
+  max-height: 100%;
+  padding: 14px;
+  overflow: auto;
 }
 
 .control-panel {
@@ -277,12 +287,12 @@ h2 {
 
 .panel-section {
   display: grid;
-  gap: 12px;
+  gap: 9px;
 }
 
 .section-header {
   display: flex;
-  align-items: start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   min-width: 0;
@@ -319,8 +329,8 @@ h2 {
 .scenario-button {
   display: grid;
   gap: 4px;
-  min-height: 58px;
-  padding: 10px 12px;
+  min-height: 46px;
+  padding: 8px 10px;
   text-align: left;
 }
 
@@ -331,7 +341,7 @@ h2 {
 
 .task-list {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .task-row {
@@ -365,7 +375,7 @@ h2 {
 
 .task-details {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   cursor: default;
 }
 
@@ -499,15 +509,15 @@ h2 {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 96px), 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 86px), 1fr));
+  gap: 6px;
 }
 
 .metric {
   display: grid;
-  gap: 8px;
-  min-height: 68px;
-  padding: 10px;
+  gap: 5px;
+  min-height: 48px;
+  padding: 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: linear-gradient(180deg, #182028, #11171d);
@@ -522,7 +532,7 @@ h2 {
 
 .metric strong {
   color: var(--line-hot);
-  font-size: 1.1rem;
+  font-size: 0.96rem;
   text-shadow: 0 0 12px rgba(255, 138, 31, 0.2);
 }
 
@@ -546,6 +556,7 @@ h2 {
 
 .timeline-shell {
   overflow-x: auto;
+  overflow-y: hidden;
   border: 1px solid rgba(255, 138, 31, 0.28);
   border-radius: 8px;
   background:
@@ -558,7 +569,9 @@ h2 {
 
 .timeline-shell svg {
   display: block;
+  width: auto;
   max-width: none;
+  height: auto;
 }
 
 .axis-line,
@@ -671,9 +684,9 @@ h2 {
 .inspector {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  min-height: 48px;
-  padding: 12px;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
   color: var(--muted);
@@ -691,7 +704,7 @@ h2 {
 }
 
 .json-panel summary {
-  padding: 12px;
+  padding: 8px 10px;
   cursor: pointer;
 }
 
@@ -724,6 +737,7 @@ h2 {
 @media (max-width: 1180px) {
   .workspace {
     grid-template-columns: 1fr;
+    overflow: auto;
   }
 
   .control-panel {
@@ -733,6 +747,14 @@ h2 {
 }
 
 @media (max-width: 760px) {
+  body {
+    overflow: auto;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
   .command-band,
   .terminal-actions,
   .section-header {
@@ -742,6 +764,17 @@ h2 {
   .control-panel,
   .simulation-panel {
     padding: 16px;
+  }
+
+  .workspace {
+    height: auto;
+    min-height: calc(100vh - 120px);
+    overflow: visible;
+  }
+
+  .app-shell {
+    height: auto;
+    overflow: visible;
   }
 
   .task-row {

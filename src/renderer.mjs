@@ -1,7 +1,7 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 export function renderTimeline(target, result, options = {}) {
-  const { selectedTaskId = null, showTaskLanes = true } = options;
+  const { selectedTaskId = null, showTaskLanes = false } = options;
   target.textContent = "";
 
   if (!result || !result.ok) {
@@ -10,19 +10,19 @@ export function renderTimeline(target, result, options = {}) {
   }
 
   const enabledTasks = result.tasks.filter((task) => task.enabled);
-  const width = Math.max(980, result.metrics.simulationEnd * 26);
-  const margin = { left: 116, right: 30, top: 30 };
-  const sharedTop = 68;
-  const sharedHeight = 54;
-  const laneGap = 16;
-  const laneHeight = 34;
+  const width = Math.max(980, result.metrics.simulationEnd * 12);
+  const margin = { left: 88, right: 22, top: 18 };
+  const sharedTop = 44;
+  const sharedHeight = 32;
+  const laneGap = 8;
+  const laneHeight = 22;
   const taskLaneCount = showTaskLanes ? enabledTasks.length : 0;
-  const laneStart = sharedTop + sharedHeight + 58;
+  const laneStart = sharedTop + sharedHeight + 34;
   const taskLaneBlock = taskLaneCount * (laneHeight + laneGap);
-  const axisY = laneStart + taskLaneBlock + 18;
-  const frequencyTop = axisY + 48;
-  const frequencyHeight = 116;
-  const height = frequencyTop + frequencyHeight + 26;
+  const axisY = laneStart + taskLaneBlock + 10;
+  const frequencyTop = axisY + 34;
+  const frequencyHeight = 78;
+  const height = frequencyTop + frequencyHeight + 18;
   const plotWidth = width - margin.left - margin.right;
   const timeScale = (time) => margin.left + (time / result.metrics.simulationEnd) * plotWidth;
   const svg = createSvg(width, height);
@@ -59,13 +59,13 @@ export function renderInspector(target, interval) {
 }
 
 function drawHeader(svg, margin, timeScale, simulationEnd) {
-  appendText(svg, margin.left, 28, "CPU EXECUTION BUS", "axis-label hot-label");
-  appendLine(svg, margin.left, 42, timeScale(simulationEnd), 42, "glow-line");
+  appendText(svg, margin.left, 20, "CPU EXECUTION BUS", "axis-label hot-label");
+  appendLine(svg, margin.left, 30, timeScale(simulationEnd), 30, "glow-line");
 }
 
 function drawCpuLane(svg, result, margin, y, laneHeight, timeScale, selectedTaskId) {
-  appendText(svg, 20, y + 34, "CPU", "lane-label");
-  appendLine(svg, margin.left, y + laneHeight + 8, timeScale(result.metrics.simulationEnd), y + laneHeight + 8, "track-line");
+  appendText(svg, 20, y + 22, "CPU", "lane-label");
+  appendLine(svg, margin.left, y + laneHeight + 6, timeScale(result.metrics.simulationEnd), y + laneHeight + 6, "track-line");
 
   result.trace
     .filter((interval) => interval.event === "execution" || interval.event === "idle")
@@ -84,12 +84,12 @@ function drawCpuLane(svg, result, margin, y, laneHeight, timeScale, selectedTask
 }
 
 function drawTaskLanes(svg, result, tasks, margin, startY, laneHeight, laneGap, timeScale, selectedTaskId) {
-  appendText(svg, margin.left, startY - 20, "OPTIONAL TASK LANES", "axis-label");
+  appendText(svg, margin.left, startY - 12, "OPTIONAL TASK LANES", "axis-label");
 
   tasks.forEach((task, index) => {
     const y = startY + index * (laneHeight + laneGap);
-    appendText(svg, 20, y + 23, task.name, selectedTaskId === task.id ? "lane-label selected-label" : "lane-label");
-    appendLine(svg, margin.left, y + laneHeight + 6, timeScale(result.metrics.simulationEnd), y + laneHeight + 6, "lane-grid");
+    appendText(svg, 20, y + 16, task.name, selectedTaskId === task.id ? "lane-label selected-label" : "lane-label");
+    appendLine(svg, margin.left, y + laneHeight + 4, timeScale(result.metrics.simulationEnd), y + laneHeight + 4, "lane-grid");
 
     result.trace
       .filter((interval) => interval.taskId === task.id && interval.event === "execution")
@@ -135,7 +135,7 @@ function drawInterval(svg, interval, box) {
   svg.append(rect);
 
   if (box.label && box.width > 34) {
-    appendText(svg, box.x + 8, box.y + Math.min(31, box.height - 8), box.label, "block-label");
+    appendText(svg, box.x + 6, box.y + Math.min(20, box.height - 6), box.label, "block-label");
   }
 }
 
@@ -143,17 +143,17 @@ function drawJobMarkers(svg, jobs, misses, y, laneHeight, timeScale, simulationE
   jobs.forEach((job) => {
     const releaseX = timeScale(job.releaseTime);
     const deadlineX = timeScale(Math.min(job.absoluteDeadline, simulationEnd));
-    appendLine(svg, releaseX, y - 9, releaseX, y + laneHeight + 9, "release-marker");
-    appendLine(svg, deadlineX, y - 12, deadlineX, y + laneHeight + 12, job.missed ? "deadline-marker missed" : "deadline-marker");
+    appendLine(svg, releaseX, y - 6, releaseX, y + laneHeight + 6, "release-marker");
+    appendLine(svg, deadlineX, y - 8, deadlineX, y + laneHeight + 8, job.missed ? "deadline-marker missed" : "deadline-marker");
 
     if (job.completedAt != null && job.completedAt <= simulationEnd) {
-      appendCircle(svg, timeScale(job.completedAt), y + laneHeight + 15, 3.5, "completion-marker");
+      appendCircle(svg, timeScale(job.completedAt), y + laneHeight + 10, 3, "completion-marker");
     }
   });
 
   misses.forEach((miss) => {
     const x = timeScale(Math.min(miss.missTime, simulationEnd));
-    appendText(svg, x + 5, y - 15, "MISS", "miss-label");
+    appendText(svg, x + 5, y - 10, "MISS", "miss-label");
   });
 }
 

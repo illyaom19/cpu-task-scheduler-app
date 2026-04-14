@@ -12,7 +12,7 @@ const state = {
   selectedTaskId: null,
   selectedInterval: null,
   autoRun: true,
-  showTaskLanes: true,
+  showTaskLanes: false,
   stale: false,
   expandedTaskIds: new Set(),
 };

@@ -285,3 +285,11 @@ Action: handoff
 Summary: Preparing to commit and push the Actual/WCET slider optimization and local server log updates to origin/main.
 Files touched: agents_log, src/app.mjs, styles.css
 Verification: node --check passed for src/app.mjs, src/model.mjs, src/renderer.mjs, and tests/scheduler.test.mjs; node tests/scheduler.test.mjs passed 12 tests.
+- 2026-04-13 21:43 PDT: Planned viewport-fit pass to compact the trace area, reduce schedule scaling, and keep page/panel content within the visible screen.
+- 2026-04-13 21:45 PDT: Implemented viewport-fit pass: compacted trace SVG dimensions, made task lanes opt-in by default, bounded app layout to the viewport, and verified local server with cache-busted URL.
+- 2026-04-13 21:45 PDT: Verified viewport-fit changes with node --check for app/renderer, scheduler tests, git diff --check, and curl HEAD against http://127.0.0.1:8000/?v=viewport-fit-20260413.
+- 2026-04-13 21:47 PDT: Planned adjustment to restore timeline-local scrolling at a readable fixed graph size while keeping the overall page viewport bounded.
+- 2026-04-13 21:47 PDT: Adjusted timeline to scroll within its own panel at a readable fixed SVG size; verified renderer syntax, scheduler tests, diff whitespace, and local server response.
+- 2026-04-13 21:50 PDT: Planned timeline viewport adjustment so the trace height follows graph content dynamically while retaining horizontal-only timeline scrolling.
+- 2026-04-13 21:50 PDT: Implemented horizontal-only trace scrolling; timeline height now follows SVG content dynamically with no vertical trace scrollbar. Verified renderer syntax, scheduler tests, and diff whitespace.
+- 2026-04-13 21:52 PDT: Preparing commit and push for viewport-bounded layout and timeline scroll behavior changes.
